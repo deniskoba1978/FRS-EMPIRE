@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ФРС Empire — Печатный станок</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg-deep: #14201a;
+    --bg-deep-2: #0d1712;
+    --panel: #1b2a21;
+    --panel-2: #223529;
+    --paper: #ece1c4;
+    --paper-dim: #b9ae8d;
+    --press: #3a5a44;
+    --press-light: #4f7a5c;
+    --stamp-red: #a4392a;
+    --gold: #c9a227;
+    --gold-light: #e0c15a;
+    --ink: #1b1b14;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: radial-gradient(ellipse at top, var(--bg-deep) 0%, var(--bg-deep-2) 100%);
+    font-family: 'Inter', sans-serif;
+    color: var(--paper);
+    overflow-x: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    padding-bottom: 78px;
+  }
+
+  /* ---- Top header ---- */
+  .topbar {
+    padding: 14px 16px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .league-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel);
+    border: 1px solid #33452f;
+    border-radius: 20px;
+    padding: 6px 12px 6px 6px;
+  }
+
+  .league-badge .icon {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+
+  .league-badge .name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .league-progress-wrap {
+    padding: 0 16px 6px;
+  }
+
+  .league-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    color: var(--paper-dim);
+    margin-bottom: 3px;
+    letter-spacing: 0.04em;
+  }
+
+  .league-progress-track {
+    width: 100%;
+    height: 5px;
+    background: var(--bg-deep-2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .league-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--press-light), var(--gold));
+    transition: width 0.3s ease-out;
+  }
+
+  .exchange-pill {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--gold);
+    background: var(--panel);
+    border: 1px solid #33452f;
+    padding: 6px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .balance-block {
+    text-align: center;
+    margin: 4px 0 6px;
+  }
+
+  .balance-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 42px;
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .balance-value .coin {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; color: var(--ink); font-weight: 900;
+  }
+
+  .phr {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--press-light);
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+
+  .phr b { color: var(--paper-dim); font-weight: 600; }
+
+  .buy-token-btn {
+    display: block;
+    margin: 10px 16px 4px;
+    text-align: center;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 3px 0 #8a7318;
+  }
+
+  .buy-token-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 #8a7318;
+  }
+
+  .join-btn {
+    display: block;
+    margin: 6px 16px 4px;
+    text-align: center;
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .join-btn:active { transform: translateY(2px); }
+
+  /* ---- Tab panels ---- */
+  .panel { display: none; flex: 1; padding: 0 16px; animation: fadeIn 0.2s ease-out; }
+  .panel.active { display: flex; flex-direction: column; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* MAIN TAP TAB */
+  .tap-panel { align-items: center; justify-content: flex-start; }
+
+  .press-zone {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 18px 0 14px;
+    min-height: 240px;
+  }
+
+  .press-btn {
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    border: 3px solid var(--gold);
+    background: radial-gradient(circle at 35% 30%, var(--press-light) 0%, var(--press) 55%, var(--press) 100%);
+    color: var(--paper);
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 9px 0 #1c2e22, 0 12px 20px rgba(0,0,0,0.5);
+    transition: transform 0.05s, box-shadow 0.05s;
+    position: relative;
+    user-select: none;
+  }
+
+  .press-btn:active, .press-btn.pressed {
+    transform: translateY(7px);
+    box-shadow: 0 2px 0 #1c2e22, 0 4px 10px rgba(0,0,0,0.5);
+  }
+
+  .press-btn.empty {
+    animation: shake 0.3s;
+    filter: grayscale(0.6);
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .empty-hint {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--stamp-red);
+    text-align: center;
+    margin-top: -4px;
+    margin-bottom: 6px;
+    min-height: 14px;
+  }
+
+  .press-btn small {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 400;
+    font-size: 11px;
+    color: var(--paper-dim);
+    margin-top: 6px;
+    letter-spacing: 0.08em;
+  }
+
+  .stamp-mark {
+    position: absolute;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--gold-light);
+    pointer-events: none;
+    opacity: 0.95;
+    animation: floatUp 0.9s ease-out forwards;
+  }
+
+  @keyframes floatUp {
+    0% { transform: translate(-50%, -50%) rotate(var(--r, 0deg)) scale(0.8); opacity: 1; }
+    100% { transform: translate(-50%, -160%) rotate(var(--r, 0deg)) scale(1.15); opacity: 0; }
+  }
+
+  .energy-row {
+    width: 100%;
+    margin-top: auto;
+    padding-bottom: 6px;
+  }
+
+  .energy-label {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    margin-bottom: 5px;
+  }
+
+  .bar-track {
+    width: 100%;
+    height: 10px;
+    background: var(--bg-deep-2);
+    border: 1px solid #33452f;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--gold) 0%, var(--gold-light) 100%);
+    transition: width 0.15s ease-out;
+  }
+
+  .infl-fill {
+    background: linear-gradient(90deg, var(--press) 0%, var(--gold) 60%, var(--stamp-red) 100%);
+  }
+
+  /* UPGRADES / TASKS / LEADERBOARD common list */
+  .section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin: 16px 0 10px;
+  }
+
+  .scroll-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 10px;
+  }
+
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--panel);
+    border: 1px solid #2c3d30;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 9px;
+  }
+
+  .card .icon {
+    width: 42px; height: 42px;
+    border-radius: 8px;
+    background: var(--panel-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+  }
+
+  .card .info { flex: 1; min-width: 0; }
+
+  .card .name {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--paper);
+  }
+
+  .card .meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--paper-dim);
+    margin-top: 2px;
+  }
+
+  .card .buy {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    background: var(--press);
+    color: var(--paper);
+    border: none;
+    border-radius: 7px;
+    padding: 9px 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .card .buy:disabled {
+    background: #2c3d30;
+    color: #5c6d61;
+    cursor: not-allowed;
+  }
+
+  .card .buy.owned {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+  }
+
+  /* BOOSTS TAB */
+  .boost-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .boost-card {
+    background: var(--panel);
+    border: 1px solid #2c3d30;
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+
+  .boost-card .icon { font-size: 26px; margin-bottom: 6px; }
+  .boost-card .name { font-size: 12.5px; font-weight: 600; margin-bottom: 3px; }
+  .boost-card .desc {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--paper-dim);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .boost-card button {
+    width: 100%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+  }
+  .boost-card button:disabled {
+    background: #2c3d30;
+    color: #5c6d61;
+    cursor: not-allowed;
+  }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    background: var(--bg-deep-2);
+    border-top: 1px solid #2c3d30;
+    display: flex;
+    z-index: 5;
+  }
+
+  .nav-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--paper-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px 2px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+
+  .nav-btn .ni { font-size: 18px; }
+  .nav-btn.active { color: var(--gold); }
+
+  /* MODALS */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(13, 23, 18, 0.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    z-index: 20;
+    padding: 30px;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-overlay h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    margin-bottom: 8px;
+  }
+  .modal-overlay p {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    max-width: 280px;
+    line-height: 1.6;
+    color: var(--paper-dim);
+  }
+  .modal-overlay button {
+    margin-top: 20px;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    padding: 11px 26px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .crash h2 { color: var(--stamp-red); }
+
+  .rules-modal {
+    align-items: stretch;
+    justify-content: flex-start;
+    text-align: left;
+    padding: 0;
+  }
+
+  .rules-inner {
+    background: var(--bg-deep);
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px 20px 40px;
+  }
+
+  .rules-inner h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    color: var(--gold);
+    margin-bottom: 4px;
+    text-align: left;
+  }
+
+  .rules-inner .rules-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    margin-bottom: 18px;
+  }
+
+  .rules-inner h3 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    margin: 20px 0 8px;
+  }
+
+  .rules-inner p, .rules-inner li {
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--paper);
+    margin: 0 0 8px;
+  }
+
+  .rules-inner ul { padding-left: 18px; margin: 0 0 6px; }
+
+  .rules-note {
+    background: var(--panel);
+    border: 1px solid var(--stamp-red);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 6px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--paper-dim);
+  }
+
+  .rules-inner button {
+    margin-top: 22px;
+    width: 100%;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    padding: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  /* ---- Ad banner ---- */
+  .ad-banner {
+    display: block;
+    text-decoration: none;
+    margin: 10px 0 4px;
+    width: 100%;
+    background: linear-gradient(135deg, var(--panel-2), var(--panel));
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    padding: 12px 14px;
+    position: relative;
+    overflow: hidden;
+    animation: adPulse 2.2s ease-in-out infinite;
+  }
+
+  @keyframes adPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(201,162,39,0.0); }
+    50% { box-shadow: 0 0 0 5px rgba(201,162,39,0.08); }
+  }
+
+  .ad-banner .ad-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+
+  .ad-banner .ad-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .ad-banner .ad-icon {
+    width: 40px; height: 40px;
+    border-radius: 9px;
+    background: var(--panel-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .ad-banner .ad-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--paper);
+  }
+
+  .ad-banner .ad-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--paper-dim);
+    margin-top: 2px;
+  }
+
+  .ad-banner .ad-cta {
+    margin-left: auto;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--gold);
+    padding: 6px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .ad-dots {
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    margin-bottom: 6px;
+  }
+
+  .ad-dots span {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #3a3a2c;
+  }
+
+  .ad-dots span.on { background: var(--gold); }
+
+  .ad-card-inline {
+    background: var(--panel);
+    border: 1px dashed var(--gold);
+  }
+
+  .disclaimer-link {
+    display: block;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--paper-dim);
+    text-decoration: underline;
+    margin-top: 14px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+  }
+
+  .consent-gate .rules-inner button.secondary {
+    background: transparent;
+    border: 1px solid var(--paper-dim);
+    color: var(--paper-dim);
+    margin-top: 10px;
+  }
+
+  .board-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 8px 4px;
+    color: var(--paper-dim);
+    border-bottom: 1px dashed #2a2a20;
+  }
+  .board-row.me { color: var(--gold); font-weight: 700; }
+
+  .task-check {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    background: transparent;
+    border: 1px solid #2c3d30;
+    line-height: 1.4;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="league-badge">
+      <div class="icon">🏛️</div>
+      <div class="name" id="leagueName">Стажёр ФРС</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="exchange-pill" id="exchangePill">Крахов: 0</div>
+      <button class="exchange-pill" id="rulesBtn" style="cursor:pointer;">Правила ℹ️</button>
+    </div>
+  </div>
+
+  <div class="league-progress-wrap">
+    <div class="league-progress-label"><span id="nextLeagueLabel">До след. лиги</span><span id="nextLeagueAmt"></span></div>
+    <div class="league-progress-track"><div class="league-progress-fill" id="leagueProgressFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="balance-block">
+    <div class="balance-value"><div class="coin">$</div><span id="balanceVal">0</span></div>
+    <div class="phr">Доход: <b id="phrVal">0</b>/час · Инфляция: <b id="inflVal">0%</b></div>
+  </div>
+
+  <a class="buy-token-btn" id="buyTokenBtn" href="https://t.me/gasPump_bot/app?startapp=eyJyZWZfdXNlcl9pZCI6NjcxNjQwOTAzOCwidG9rZW5fYWRkcmVzcyI6IkVRRHQ4MXVybXlhVUllVmdaeExYRllVWXFfYVdFZ29hQmYxMG0tMWUtbmhiWFVvSSJ9" target="_blank" rel="noopener noreferrer">Купить $ФРС на Gas Pump</a>
+  <a class="join-btn" id="joinChannelBtn" href="https://t.me/fares_frs7" target="_blank" rel="noopener noreferrer">Вступить в канал $ФРС</a>
+
+  <!-- TAP TAB -->
+  <div class="panel tap-panel active" id="tab-main">
+    <div class="ad-dots" id="adDots"></div>
+    <a class="ad-banner" id="adBanner" href="#" target="_blank" rel="noopener noreferrer">
+      <div class="ad-eyebrow">Реклама · спонсор станка</div>
+      <div class="ad-row">
+        <div class="ad-icon" id="adIcon">📢</div>
+        <div>
+          <div class="ad-title" id="adTitle">Место для рекламы</div>
+          <div class="ad-sub" id="adSub">Впишите своего рекламодателя</div>
+        </div>
+        <div class="ad-cta">Перейти</div>
+      </div>
+    </a>
+    <div class="press-zone" id="pressZone">
+      <button class="press-btn" id="pressBtn">ПЕЧАТЬ<small>tap to brrr</small></button>
+    </div>
+    <div class="empty-hint" id="emptyHint"></div>
+    <div class="energy-row">
+      <div class="energy-label"><span>Энергия</span><span id="energyText">1000 / 1000</span></div>
+      <div class="bar-track"><div class="bar-fill" id="energyFill"></div></div>
+    </div>
+    <div class="energy-row">
+      <div class="energy-label"><span>Инфляция станка</span><span id="inflText">0%</span></div>
+      <div class="bar-track"><div class="bar-fill infl-fill" id="inflFill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- UPGRADES TAB -->
+  <div class="panel" id="tab-upgrades">
+    <div class="section-title">Апгрейды станка</div>
+    <div class="scroll-list" id="upgradesList"></div>
+  </div>
+
+  <!-- BOOSTS TAB -->
+  <div class="panel" id="tab-boosts">
+    <div class="section-title">Бусты</div>
+    <div class="boost-grid">
+      <div class="boost-card">
+        <div class="icon">⚡</div>
+        <div class="name">Полная энергия</div>
+        <div class="desc">Мгновенно восстанавливает энергию. 3 раза в день, бесплатно.</div>
+        <button id="boostRefill">Использовать (<span id="refillLeft">3</span>)</button>
+      </div>
+      <div class="boost-card">
+        <div class="icon">🚀</div>
+        <div class="name">Мультитап x3</div>
+        <div class="desc">Утраивает доход с тапа на 30 секунд.</div>
+        <button id="boostMulti">Использовать (<span id="multiLeft">3</span>)</button>
+      </div>
+      <div class="boost-card">
+        <div class="icon">❄️</div>
+        <div class="name">Заморозка инфляции</div>
+        <div class="desc">Инфляция не растёт 20 секунд.</div>
+        <button id="boostFreeze">Использовать (<span id="freezeLeft">3</span>)</button>
+      </div>
+      <div class="boost-card">
+        <div class="icon">🔋</div>
+        <div class="name">Лимит энергии</div>
+        <div class="desc">Постоянно +200 к максимуму энергии.</div>
+        <button id="boostMaxEnergy">Купить за <span id="maxEnergyCost">2 000</span></button>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:20px;">Спонсор буста</div>
+    <a class="card ad-card-inline" id="adRewardCard" href="#" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+      <div class="icon" id="adRewardIcon">🎁</div>
+      <div class="info">
+        <div class="name" id="adRewardTitle">Посмотреть рекламу</div>
+        <div class="meta" id="adRewardSub">+300 $ФРС за переход · до 5 раз в день</div>
+      </div>
+      <div class="buy" id="adRewardBtn">Открыть</div>
+    </a>
+
+    <div class="section-title" style="margin-top:22px;">Управление</div>
+    <button class="card buy" id="resetBtn" style="width:100%; justify-content:center; background:transparent; border:1px solid var(--stamp-red); color:var(--stamp-red);">Сбросить прогресс</button>
+  </div>
+
+  <!-- TASKS TAB -->
+  <div class="panel" id="tab-tasks">
+    <div class="section-title">Задания</div>
+    <div class="task-check">Задания подтверждаются вами вручную — это витрина для комьюнити-активностей, не автоматическая проверка через Telegram API.</div>
+    <div class="scroll-list" id="tasksList"></div>
+  </div>
+
+  <!-- LEADERBOARD TAB -->
+  <div class="panel" id="tab-board">
+    <div class="section-title">Рейтинг держателей</div>
+    <div class="card" style="flex-direction:column; align-items:stretch; gap:8px;">
+      <div class="name">Поделиться результатом</div>
+      <textarea id="shareText" readonly rows="3" style="width:100%; background:var(--panel-2); border:1px solid #2c3d30; border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:11px; padding:8px; resize:none;"></textarea>
+      <button class="buy" id="copyShareBtn" style="align-self:flex-end;">Скопировать</button>
+    </div>
+    <div id="sharedStatus" class="task-check">Рейтинг общий и виден всем игрокам, которые его включат.</div>
+    <button class="card buy" id="enableSharedBtn" style="width:100%; justify-content:center; margin-bottom:12px;">Включить общий рейтинг</button>
+    <div class="scroll-list" id="leaderboardList"></div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-btn active" data-tab="main"><span class="ni">🖨️</span>Станок</button>
+    <button class="nav-btn" data-tab="upgrades"><span class="ni">📈</span>Апгрейды</button>
+    <button class="nav-btn" data-tab="boosts"><span class="ni">🚀</span>Бусты</button>
+    <button class="nav-btn" data-tab="tasks"><span class="ni">📋</span>Задания</button>
+    <button class="nav-btn" data-tab="board"><span class="ni">🏆</span>Рейтинг</button>
+  </div>
+
+  <div class="modal-overlay" id="crashOverlay">
+    <div class="crash">
+      <h2>BRRR — КРАХ</h2>
+      <p>Станок перегрелся, инфляция съела часть тиража. Рынок такое видел уже тысячи раз.</p>
+      <button id="restartBtn">Перезапустить станок</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="offlineOverlay">
+    <h2>Пока вас не было...</h2>
+    <p id="offlineText"></p>
+    <button id="offlineClose">Забрать</button>
+  </div>
+
+  <div class="modal-overlay rules-modal" id="disclaimerOverlay">
+    <div class="rules-inner">
+      <h2>Правовая информация</h2>
+      <div class="rules-sub">Отказ от ответственности · прочтите перед игрой</div>
+
+      <h3>1. Характер продукта</h3>
+      <p>Это развлекательное приложение, созданное сообществом токена $ФРС. Игра не является финансовым продуктом, ценной бумагой, биржей, инвестиционной платформой или банковским сервисом.</p>
+
+      <h3>2. Внутриигровая валюта</h3>
+      <p>Баланс «$», который вы копите в игре, — это внутриигровые очки. Они не являются криптовалютой, электронными деньгами или платёжным средством и сами по себе не гарантируют получение токена $ФРС, других криптоактивов или денег.</p>
+
+      <h3>3. Не инвестиционный совет</h3>
+      <p>Ничто в игре — апгрейды, лиги, рейтинг, упоминания токена $ФРС — не является инвестиционной, финансовой, налоговой или юридической рекомендацией. Решение о покупке любого токена вы принимаете самостоятельно, на основе собственной оценки и на свой риск.</p>
+
+      <h3>4. Высокий риск</h3>
+      <p>Криптотокены на ранней стадии, включая размещённые на платформах вроде Gas Pump, крайне волатильны и могут полностью обесцениться. Не вкладывайте средства, потерю которых вы не готовы принять полностью.</p>
+
+      <h3>5. Реклама третьих лиц</h3>
+      <p>Рекламные блоки в игре могут вести на сайты и сервисы, не связанные с создателями игры. Создатели не проверяют и не несут ответственности за содержание, безопасность или последствия перехода по таким ссылкам.</p>
+
+      <h3>6. Ограничение ответственности</h3>
+      <p>Игра предоставляется «как есть», без каких-либо гарантий. В максимально допустимой законом мере создатели игры и токена не несут ответственности за прямые или косвенные убытки, возникшие в связи с использованием игры или приобретением токена.</p>
+
+      <h3>7. Согласие пользователя</h3>
+      <p>Продолжая использовать игру, вы подтверждаете, что ознакомились с этим разделом и принимаете описанные риски на себя.</p>
+
+      <div class="rules-note">
+        Этот текст информирует пользователей о рисках и не создаёт для команды проекта иммунитета от ответственности в случае реального мошенничества, манипулирования рынком или введения людей в заблуждение — от этого не защищает ни один текст ни в одной юрисдикции.
+      </div>
+
+      <button id="disclaimerAccept">Я понимаю и принимаю условия</button>
+      <button class="secondary" id="disclaimerCloseOnly" style="display:none; margin-top:10px; width:100%; background:transparent; border:1px solid var(--paper-dim); color:var(--paper-dim); padding:12px; font-family:'IBM Plex Mono',monospace; font-size:13px; border-radius:8px; cursor:pointer;">Закрыть</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay rules-modal" id="rulesOverlay">
+    <div class="rules-inner">
+      <h2>Правила игры «ФРС: Печатный станок»</h2>
+      <div class="rules-sub">Мини-игра сообщества токена $ФРС · TON / Gas Pump</div>
+
+      <h3>1. Что это за игра</h3>
+      <p>Тап-игра в жанре Hamster Kombat / Notcoin, сделанная вокруг токена $ФРС и его мема — бесконечной печати денег. Игра открыта для всех держателей и всех, кто зашёл по ссылке.</p>
+
+      <h3>2. Как печатать деньги</h3>
+      <ul>
+        <li>Нажимайте на станок на вкладке «Станок» — каждый тап приносит внутриигровые $ и тратит 1 энергию.</li>
+        <li>С каждым тапом растёт инфляция. При 100% инфляции станок «взрывается» — это крах: баланс уменьшается на 40%, инфляция сбрасывается в ноль.</li>
+        <li>Энергия восстанавливается сама со временем, максимум можно увеличить апгрейдом.</li>
+      </ul>
+
+      <h3>3. Апгрейды</h3>
+      <p>Покупаются за внутриигровые $ на вкладке «Апгрейды». Одни повышают доход с тапа, другие — пассивный доход в час. Каждый следующий уровень апгрейда дороже предыдущего.</p>
+
+      <h3>4. Бусты</h3>
+      <ul>
+        <li><b>Полная энергия</b> — мгновенное восстановление, 3 раза в день бесплатно.</li>
+        <li><b>Мультитап x3</b> — утраивает доход с тапа на 30 секунд, 3 раза в день.</li>
+        <li><b>Заморозка инфляции</b> — инфляция не растёт 20 секунд, 3 раза в день.</li>
+        <li><b>Лимит энергии</b> — покупается за $, действует навсегда.</li>
+      </ul>
+
+      <h3>5. Лиги</h3>
+      <p>Статус игрока растёт вместе с балансом: Стажёр ФРС → Кассир → Аналитик → Вице-президент → Управляющий → Джером Пауэлл. Прогресс до следующей лиги виден в шапке игры.</p>
+
+      <h3>6. Пассивный доход и офлайн</h3>
+      <p>Апгрейды дают доход в час, который капает даже когда вы не в игре. При возвращении игра начисляет заработанное за время отсутствия (максимум за 3 часа).</p>
+
+      <h3>7. Задания</h3>
+      <p>Разовые бонусы за действия — вступить в канал, пригласить друга и т.д. Часть заданий засчитывается автоматически (например, продержаться 5 минут без краха), часть отмечается вами вручную и не проверяется технически.</p>
+
+      <h3>8. Рейтинг</h3>
+      <p>Общий рейтинг виден всем, кто его включил на вкладке «Рейтинг». Там же можно скопировать готовый текст, чтобы поделиться результатом в чате.</p>
+
+      <h3>9. Что получает участник</h3>
+      <ul>
+        <li>Внутриигровой баланс, уровень апгрейдов и статус лиги — это игровые очки внутри этого приложения.</li>
+        <li>Место в общем рейтинге держателей.</li>
+        <li>Прямую ссылку на покупку токена $ФРС на Gas Pump и на канал сообщества.</li>
+      </ul>
+      <div class="rules-note">
+        Важно: игровой баланс — это не сам токен $ФРС и не гарантия его получения. Будут ли и как именно лучшие игроки рейтинга вознаграждаться реальными токенами — решает команда проекта отдельно; условия такого вознаграждения нужно объявить в канале до того, как о них заявлять в правилах.
+      </div>
+
+      <h3>10. Общие условия</h3>
+      <p>Игра предоставляется как есть, без гарантий заработка. Участие бесплатно и не требует подключения кошелька или ввода приватных данных.</p>
+
+      <button id="rulesClose">Понятно</button>
+      <button class="disclaimer-link" id="openDisclaimerFromRules">Правовая информация и отказ от ответственности</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ---------- STATE ----------
+  let balance = 0;
+  let energy = 1000;
+  let maxEnergy = 1000;
+  let tapPower = 1;
+  let profitPerHour = 0;
+  let inflation = 0;
+  let crashes = 0;
+  let lastSaveTs = Date.now();
+  let sharedOn = false;
+  let multiTapUntil = 0;
+  let freezeUntil = 0;
+  let refillsLeft = 3;
+  let multiLeft = 3;
+  let freezeLeft = 3;
+  let maxEnergyBought = 0;
+  let lastDayReset = new Date().toDateString();
+  let tasksState = {};
+  let sessionStartTs = Date.now();
+
+  const UPGRADES = [
+    { id: 'paper', name: 'Бумага', icon: '📄', type: 'tap', baseEffect: 1, baseCost: 100, growth: 1.18 },
+    { id: 'ink', name: 'Чернила', icon: '🖋️', type: 'tap', baseEffect: 2, baseCost: 300, growth: 1.2 },
+    { id: 'press1', name: 'Печатный станок', icon: '🖨️', type: 'phr', baseEffect: 50, baseCost: 500, growth: 1.22 },
+    { id: 'staff', name: 'Штат ФРС', icon: '👔', type: 'phr', baseEffect: 120, baseCost: 1500, growth: 1.24 },
+    { id: 'powell', name: 'Пресс-конференция Пауэлла', icon: '🎙️', type: 'tap', baseEffect: 15, baseCost: 4000, growth: 1.26 },
+    { id: 'heli', name: 'Вертолёт денег', icon: '🚁', type: 'phr', baseEffect: 400, baseCost: 8000, growth: 1.28 },
+    { id: 'night', name: 'Печать по ночам', icon: '🌙', type: 'phr', baseEffect: 900, baseCost: 20000, growth: 1.3 },
+    { id: 'treasury', name: 'Минфин на подхвате', icon: '🏦', type: 'phr', baseEffect: 2200, baseCost: 55000, growth: 1.32 },
+  ];
+  let upgradeLevels = {};
+  UPGRADES.forEach(u => upgradeLevels[u.id] = 0);
+
+  const LEAGUES = [
+    { min: 0, name: 'Стажёр ФРС' },
+    { min: 5000, name: 'Кассир' },
+    { min: 25000, name: 'Аналитик' },
+    { min: 100000, name: 'Вице-президент' },
+    { min: 500000, name: 'Управляющий' },
+    { min: 2000000, name: 'Джером Пауэлл' },
+  ];
+
+  const TASKS = [
+    { id: 't1', name: 'Вступить в Telegram-канал $ФРС', reward: 500, url: 'https://t.me/fares_frs7' },
+    { id: 't2', name: 'Подписаться на X (Twitter) проекта', reward: 500 },
+    { id: 't3', name: 'Пригласить одного друга в чат', reward: 1000 },
+    { id: 't4', name: 'Оставить мем про $ФРС в чате', reward: 300 },
+    { id: 't5', name: 'Продержать станок без краха 5 минут подряд', reward: 800 },
+  ];
+
+  // ---------- AD SLOTS (edit these with real advertisers/links) ----------
+  const ADS = [
+    { id: 'ad1', icon: '📢', title: 'Место для рекламы №1', sub: 'Впишите название и оффер рекламодателя', url: 'https://t.me/fares_frs7' },
+    { id: 'ad2', icon: '🚀', title: 'Место для рекламы №2', sub: 'Например: другой TON-проект или биржа', url: 'https://t.me/fares_frs7' },
+    { id: 'ad3', icon: '💎', title: 'Место для рекламы №3', sub: 'Партнёрская ссылка или ваш второй канал', url: 'https://t.me/fares_frs7' },
+  ];
+  const AD_REWARD = { icon: '🎁', title: 'Посмотреть рекламу', url: 'https://t.me/fares_frs7', reward: 300, dailyLimit: 5 };
+  let adRewardsUsedToday = 0;
+  let adIndex = 0;
+
+  // ---------- DOM ----------
+  const $ = id => document.getElementById(id);
+  const balanceVal = $('balanceVal'), phrVal = $('phrVal'), inflVal = $('inflVal');
+  const leagueName = $('leagueName'), exchangePill = $('exchangePill');
+  const energyText = $('energyText'), energyFill = $('energyFill');
+  const inflText = $('inflText'), inflFill = $('inflFill');
+  const pressBtn = $('pressBtn'), pressZone = $('pressZone');
+  const crashOverlay = $('crashOverlay'), restartBtn = $('restartBtn');
+  const offlineOverlay = $('offlineOverlay'), offlineText = $('offlineText'), offlineClose = $('offlineClose');
+
+  function fmt(n){
+    n = Math.floor(n);
+    if (n >= 1000000) return (n/1000000).toFixed(2) + 'M';
+    if (n >= 10000) return (n/1000).toFixed(1) + 'K';
+    return n.toLocaleString('ru-RU');
+  }
+
+  function currentLeague(){
+    let cur = LEAGUES[0];
+    for (const l of LEAGUES){ if (balance >= l.min) cur = l; }
+    return cur;
+  }
+
+  function renderLeagueProgress(lg){
+    const idx = LEAGUES.indexOf(lg);
+    const next = LEAGUES[idx + 1];
+    const fillEl = $('leagueProgressFill');
+    const labelEl = $('nextLeagueLabel');
+    const amtEl = $('nextLeagueAmt');
+    if (!next){
+      labelEl.textContent = 'Максимальная лига достигнута';
+      amtEl.textContent = '';
+      fillEl.style.width = '100%';
+      return;
+    }
+    const span = next.min - lg.min;
+    const progressed = balance - lg.min;
+    const pct = Math.max(0, Math.min(100, (progressed / span) * 100));
+    labelEl.textContent = 'До лиги «' + next.name + '»';
+    amtEl.textContent = fmt(Math.max(0, next.min - balance)) + ' $';
+    fillEl.style.width = pct + '%';
+  }
+
+  function upgradeCost(u){
+    return Math.floor(u.baseCost * Math.pow(u.growth, upgradeLevels[u.id]));
+  }
+  function upgradeEffect(u){
+    return u.baseEffect * (upgradeLevels[u.id] + 1);
+  }
+
+  function recompute(){
+    tapPower = 1;
+    profitPerHour = 0;
+    UPGRADES.forEach(u => {
+      const lvl = upgradeLevels[u.id];
+      if (lvl <= 0) return;
+      const total = u.type === 'tap'
+        ? sumSeries(u.baseEffect, u.growth, lvl)
+        : sumSeries(u.baseEffect, u.growth, lvl);
+      if (u.type === 'tap') tapPower += total;
+      else profitPerHour += total;
+    });
+  }
+
+  // sums baseEffect for each owned level (levels scale mildly with growth too, keep additive & simple)
+  function sumSeries(base, growth, levels){
+    let s = 0;
+    for (let i=0;i<levels;i++){ s += base; }
+    return s;
+  }
+
+  function render(){
+    balanceVal.textContent = fmt(balance);
+    phrVal.textContent = fmt(profitPerHour);
+    inflVal.textContent = Math.floor(inflation) + '%';
+    const lg = currentLeague();
+    leagueName.textContent = lg.name;
+    exchangePill.textContent = 'Крахов: ' + crashes;
+    renderLeagueProgress(lg);
+    energyText.textContent = Math.floor(energy) + ' / ' + maxEnergy;
+    energyFill.style.width = (energy / maxEnergy * 100) + '%';
+    inflText.textContent = Math.floor(inflation) + '%';
+    inflFill.style.width = Math.min(inflation,100) + '%';
+    renderUpgrades();
+    renderTasks();
+    updateShareText();
+    $('refillLeft').textContent = refillsLeft;
+    $('multiLeft').textContent = multiLeft;
+    $('freezeLeft').textContent = freezeLeft;
+    $('boostRefill').disabled = refillsLeft <= 0;
+    $('boostMulti').disabled = multiLeft <= 0;
+    $('boostFreeze').disabled = freezeLeft <= 0;
+    const meCost = 2000 * Math.pow(1.6, maxEnergyBought);
+    $('maxEnergyCost').textContent = fmt(meCost);
+    $('boostMaxEnergy').disabled = balance < meCost;
+    renderAdReward();
+  }
+
+  function renderAdBanner(){
+    const ad = ADS[adIndex];
+    $('adIcon').textContent = ad.icon;
+    $('adTitle').textContent = ad.title;
+    $('adSub').textContent = ad.sub;
+    $('adBanner').href = ad.url;
+    $('adDots').innerHTML = ADS.map((_,i)=> `<span class="${i===adIndex?'on':''}"></span>`).join('');
+  }
+
+  function rotateAd(){
+    adIndex = (adIndex + 1) % ADS.length;
+    renderAdBanner();
+  }
+
+  async function trackAdClick(id){
+    try {
+      const key = 'frs-empire:ad-clicks:' + id;
+      let count = 0;
+      try { const r = await window.storage.get(key, true); if (r && r.value) count = parseInt(r.value) || 0; } catch(e){}
+      count += 1;
+      await window.storage.set(key, String(count), true);
+    } catch(e) { /* best effort */ }
+  }
+
+  function renderAdReward(){
+    const used = adRewardsUsedToday >= AD_REWARD.dailyLimit;
+    $('adRewardIcon').textContent = AD_REWARD.icon;
+    $('adRewardTitle').textContent = used ? 'Реклама на сегодня закончилась' : AD_REWARD.title;
+    $('adRewardSub').textContent = used
+      ? 'Возвращайтесь завтра'
+      : ('+' + AD_REWARD.reward + ' $ФРС за переход · осталось ' + (AD_REWARD.dailyLimit - adRewardsUsedToday) + '/' + AD_REWARD.dailyLimit);
+    const card = $('adRewardCard');
+    card.href = AD_REWARD.url;
+    card.style.opacity = used ? '0.5' : '1';
+    card.style.pointerEvents = used ? 'none' : 'auto';
+  }
+
+  function renderUpgrades(){
+    const list = $('upgradesList');
+    list.innerHTML = '';
+    UPGRADES.forEach(u => {
+      const cost = upgradeCost(u);
+      const lvl = upgradeLevels[u.id];
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="icon">${u.icon}</div>
+        <div class="info">
+          <div class="name">${u.name} ${lvl>0 ? '· ур.'+lvl : ''}</div>
+          <div class="meta">${u.type === 'tap' ? '+'+u.baseEffect+' к тапу' : '+'+u.baseEffect+'/час'} за уровень</div>
+        </div>
+        <button class="buy" ${balance < cost ? 'disabled' : ''}>${fmt(cost)} $</button>
+      `;
+      card.querySelector('.buy').addEventListener('click', () => buyUpgrade(u));
+      list.appendChild(card);
+    });
+  }
+
+  function buyUpgrade(u){
+    const cost = upgradeCost(u);
+    if (balance < cost) return;
+    balance -= cost;
+    upgradeLevels[u.id] += 1;
+    recompute();
+    render();
+    save();
+  }
+
+  function renderTasks(){
+    const list = $('tasksList');
+    list.innerHTML = '';
+    TASKS.forEach(t => {
+      const done = !!tasksState[t.id];
+      const auto = t.id === 't5';
+      const card = document.createElement('div');
+      card.className = 'card';
+      let metaText = '+' + fmt(t.reward) + ' $ФРС';
+      let btnLabel = done ? 'Готово' : 'Отметить';
+      if (auto && !done){
+        const secsLeft = Math.max(0, 300 - Math.floor((Date.now() - sessionStartTs)/1000));
+        metaText += ' · автоматически, осталось ' + secsLeft + ' сек';
+        btnLabel = 'Идёт...';
+      }
+      card.innerHTML = `
+        <div class="icon">${done ? '✅' : (auto ? '⏱️' : '📌')}</div>
+        <div class="info">
+          <div class="name">${t.url ? `<a href="${t.url}" target="_blank" rel="noopener noreferrer" style="color:inherit; text-decoration:underline;">${t.name}</a>` : t.name}</div>
+          <div class="meta">${metaText}</div>
+        </div>
+        <button class="buy ${done ? 'owned':''}" ${done || auto ? 'disabled':''}>${btnLabel}</button>
+      `;
+      if (!auto){
+        card.querySelector('.buy').addEventListener('click', () => {
+          if (tasksState[t.id]) return;
+          tasksState[t.id] = true;
+          balance += t.reward;
+          render();
+          save();
+        });
+      }
+      list.appendChild(card);
+    });
+  }
+
+  // ---------- TAP ----------
+  function stampBurst(x, y, amount){
+    const mark = document.createElement('div');
+    mark.className = 'stamp-mark';
+    mark.textContent = '+$' + fmt(amount);
+    mark.style.left = x + 'px';
+    mark.style.top = y + 'px';
+    mark.style.setProperty('--r', (Math.random()*20-10) + 'deg');
+    pressZone.appendChild(mark);
+    setTimeout(()=> mark.remove(), 900);
+  }
+
+  function press(e){
+    if (crashOverlay.classList.contains('show')) return;
+    if (energy < 1) {
+      pressBtn.classList.add('empty');
+      $('emptyHint').textContent = 'Энергия закончилась — подождите или используйте буст';
+      setTimeout(()=> pressBtn.classList.remove('empty'), 300);
+      return;
+    }
+    $('emptyHint').textContent = '';
+    energy -= 1;
+    const multi = Date.now() < multiTapUntil ? 3 : 1;
+    const gain = tapPower * multi * (1 + inflation/200);
+    balance += gain;
+    if (Date.now() >= freezeUntil){
+      inflation += 1.6;
+    }
+    if (inflation >= 100){
+      triggerCrash();
+    }
+    const zoneRect = pressZone.getBoundingClientRect();
+    const cx = (e.touches ? e.touches[0].clientX : e.clientX) - zoneRect.left;
+    const cy = (e.touches ? e.touches[0].clientY : e.clientY) - zoneRect.top;
+    stampBurst(cx, cy, gain);
+    pressBtn.classList.add('pressed');
+    setTimeout(()=> pressBtn.classList.remove('pressed'), 80);
+    if (navigator.vibrate) navigator.vibrate(8);
+    render();
+  }
+
+  function triggerCrash(){
+    crashes += 1;
+    balance = balance * 0.6;
+    inflation = 0;
+    sessionStartTs = Date.now();
+    crashOverlay.classList.add('show');
+    if (navigator.vibrate) navigator.vibrate([40,30,40]);
+    save();
+  }
+
+  restartBtn.addEventListener('click', () => { crashOverlay.classList.remove('show'); render(); });
+  pressBtn.addEventListener('click', press);
+  pressBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); press(e); }, {passive:false});
+
+  // ---------- BOOSTS ----------
+  $('boostRefill').addEventListener('click', () => {
+    if (refillsLeft <= 0) return;
+    energy = maxEnergy;
+    refillsLeft -= 1;
+    render(); save();
+  });
+  $('boostMulti').addEventListener('click', () => {
+    if (multiLeft <= 0) return;
+    multiTapUntil = Date.now() + 30000;
+    multiLeft -= 1;
+    render(); save();
+  });
+  $('boostFreeze').addEventListener('click', () => {
+    if (freezeLeft <= 0) return;
+    freezeUntil = Date.now() + 20000;
+    freezeLeft -= 1;
+    render(); save();
+  });
+  $('boostMaxEnergy').addEventListener('click', () => {
+    const cost = 2000 * Math.pow(1.6, maxEnergyBought);
+    if (balance < cost) return;
+    balance -= cost;
+    maxEnergyBought += 1;
+    maxEnergy += 200;
+    render(); save();
+  });
+
+  $('resetBtn').addEventListener('click', async () => {
+    if (!confirm('Сбросить весь прогресс в этой игре? Это необратимо.')) return;
+    balance = 0; energy = 1000; maxEnergy = 1000; tapPower = 1; profitPerHour = 0;
+    inflation = 0; crashes = 0; sharedOn = false; multiTapUntil = 0; freezeUntil = 0;
+    refillsLeft = 3; multiLeft = 3; freezeLeft = 3; maxEnergyBought = 0;
+    tasksState = {}; sessionStartTs = Date.now();
+    UPGRADES.forEach(u => upgradeLevels[u.id] = 0);
+    recompute();
+    render();
+    await save();
+  });
+
+  // ---------- AD SLOTS ----------
+  $('adBanner').addEventListener('click', () => { trackAdClick(ADS[adIndex].id); });
+  setInterval(rotateAd, 6000);
+
+  $('adRewardCard').addEventListener('click', (e) => {
+    if (adRewardsUsedToday >= AD_REWARD.dailyLimit){ e.preventDefault(); return; }
+    adRewardsUsedToday += 1;
+    balance += AD_REWARD.reward;
+    trackAdClick('reward');
+    render();
+    save();
+  });
+
+  // ---------- NAV ----------
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      btn.classList.add('active');
+      $('tab-'+btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'board') refreshLeaderboard();
+    });
+  });
+
+  // ---------- passive ticking ----------
+  setInterval(() => {
+    energy = Math.min(maxEnergy, energy + 3);
+    balance += profitPerHour / 3600 * 0.5; // tick twice/sec approx
+    if (Date.now() >= freezeUntil){
+      inflation = Math.max(0, inflation - 0.5);
+    }
+    render();
+  }, 500);
+
+  // daily reset of boost counts
+  setInterval(() => {
+    const today = new Date().toDateString();
+    if (today !== lastDayReset){
+      lastDayReset = today;
+      refillsLeft = 3; multiLeft = 3; freezeLeft = 3;
+      save();
+    }
+  }, 60000);
+
+  // auto-complete "no crash for 5 minutes" task
+  setInterval(() => {
+    if (!tasksState['t5'] && !crashOverlay.classList.contains('show') && (Date.now() - sessionStartTs) >= 300000){
+      tasksState['t5'] = true;
+      balance += TASKS.find(t=>t.id==='t5').reward;
+      render();
+      save();
+    } else if (!tasksState['t5']){
+      renderTasks();
+    }
+  }, 5000);
+
+  // ---------- PERSISTENCE ----------
+  async function save(){
+    try {
+      const data = { balance, energy, maxEnergy, inflation, crashes, upgradeLevels,
+        refillsLeft, multiLeft, freezeLeft, maxEnergyBought, lastDayReset, tasksState,
+        adRewardsUsedToday, lastSaveTs: Date.now() };
+      await window.storage.set('frs-empire:save', JSON.stringify(data));
+    } catch(e) { /* best effort */ }
+  }
+
+  async function load(){
+    try {
+      const res = await window.storage.get('frs-empire:save');
+      if (res && res.value){
+        const d = JSON.parse(res.value);
+        balance = d.balance || 0;
+        energy = d.energy != null ? d.energy : 1000;
+        maxEnergy = d.maxEnergy || 1000;
+        inflation = d.inflation || 0;
+        crashes = d.crashes || 0;
+        upgradeLevels = d.upgradeLevels || upgradeLevels;
+        refillsLeft = d.refillsLeft != null ? d.refillsLeft : 3;
+        multiLeft = d.multiLeft != null ? d.multiLeft : 3;
+        freezeLeft = d.freezeLeft != null ? d.freezeLeft : 3;
+        maxEnergyBought = d.maxEnergyBought || 0;
+        lastDayReset = d.lastDayReset || new Date().toDateString();
+        tasksState = d.tasksState || {};
+        recompute();
+        const elapsedMs = Date.now() - (d.lastSaveTs || Date.now());
+        const elapsedHrs = Math.min(elapsedMs / 3600000, 3); // cap offline earn at 3h
+        const offlineGain = profitPerHour * elapsedHrs;
+        energy = Math.min(maxEnergy, energy + (elapsedMs/1000)*6); // regen while away, matches live tick rate
+        if (offlineGain > 5){
+          balance += offlineGain;
+          offlineText.textContent = 'Станок работал без вас и напечатал $' + fmt(offlineGain) + '.';
+          offlineOverlay.classList.add('show');
+        }
+      }
+    } catch(e) { /* first run */ }
+    recompute();
+    render();
+  }
+  offlineClose.addEventListener('click', () => { offlineOverlay.classList.remove('show'); });
+
+  const rulesBtn = $('rulesBtn'), rulesOverlay = $('rulesOverlay'), rulesClose = $('rulesClose');
+  rulesBtn.addEventListener('click', () => rulesOverlay.classList.add('show'));
+  rulesClose.addEventListener('click', () => rulesOverlay.classList.remove('show'));
+
+  const disclaimerOverlay = $('disclaimerOverlay');
+  const disclaimerAccept = $('disclaimerAccept');
+  const disclaimerCloseOnly = $('disclaimerCloseOnly');
+  const openDisclaimerFromRules = $('openDisclaimerFromRules');
+  let disclaimerAccepted = false;
+
+  function openDisclaimer(asGate){
+    disclaimerOverlay.classList.add('show');
+    disclaimerAccept.style.display = asGate ? 'block' : (disclaimerAccepted ? 'none' : 'block');
+    disclaimerCloseOnly.style.display = asGate ? 'none' : 'block';
+  }
+
+  disclaimerAccept.addEventListener('click', async () => {
+    disclaimerAccepted = true;
+    disclaimerOverlay.classList.remove('show');
+    try { await window.storage.set('frs-empire:consent', 'accepted'); } catch(e){}
+  });
+  disclaimerCloseOnly.addEventListener('click', () => disclaimerOverlay.classList.remove('show'));
+  openDisclaimerFromRules.addEventListener('click', () => { rulesOverlay.classList.remove('show'); openDisclaimer(false); });
+
+  async function checkConsent(){
+    try {
+      const res = await window.storage.get('frs-empire:consent');
+      if (res && res.value === 'accepted'){ disclaimerAccepted = true; return; }
+    } catch(e) { /* not accepted yet */ }
+    openDisclaimer(true);
+  }
+  checkConsent();
+
+  window.addEventListener('beforeunload', save);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+  setInterval(save, 8000);
+
+  function updateShareText(){
+    const el = $('shareText');
+    if (!el) return;
+    el.value = 'Я напечатал $' + fmt(balance) + ' в игре $ФРС (лига: ' + currentLeague().name + '). Заходи печатать деньги вместе: https://t.me/fares_frs7';
+  }
+
+  const copyShareBtn = $('copyShareBtn');
+  if (copyShareBtn){
+    copyShareBtn.addEventListener('click', async () => {
+      const el = $('shareText');
+      el.select();
+      el.setSelectionRange(0, 99999);
+      let copied = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText){
+          await navigator.clipboard.writeText(el.value);
+          copied = true;
+        }
+      } catch(e) { /* fall through to execCommand */ }
+      if (!copied){
+        try { copied = document.execCommand('copy'); } catch(e) { copied = false; }
+      }
+      copyShareBtn.textContent = copied ? 'Скопировано' : 'Выделите и скопируйте вручную';
+      setTimeout(()=> copyShareBtn.textContent = 'Скопировать', 1800);
+    });
+  }
+
+  // ---------- SHARED LEADERBOARD ----------
+  const enableSharedBtn = $('enableSharedBtn');
+  const leaderboardList = $('leaderboardList');
+  const sharedStatus = $('sharedStatus');
+
+  async function getMyId(){
+    try {
+      const existing = await window.storage.get('frs-empire:my-id');
+      if (existing && existing.value) return existing.value;
+    } catch(e){}
+    const id = 'печатник-' + Math.random().toString(36).slice(2,7);
+    try { await window.storage.set('frs-empire:my-id', id, false); } catch(e){}
+    return id;
+  }
+
+  async function submitShared(){
+    if (!sharedOn) return;
+    try {
+      const pid = await getMyId();
+      await window.storage.set('frs-empire:score:' + pid, JSON.stringify({ balance, league: currentLeague().name }), true);
+      await refreshLeaderboard();
+    } catch(e){}
+  }
+
+  async function refreshLeaderboard(){
+    leaderboardList.innerHTML = '<div class="task-check">Загрузка...</div>';
+    try {
+      const list = await window.storage.list('frs-empire:score:', true);
+      if (!list || !list.keys || list.keys.length === 0){
+        leaderboardList.innerHTML = '<div class="task-check">Пока никто не участвует. Включите рейтинг и позовите держателей в чат.</div>';
+        return;
+      }
+      const entries = [];
+      for (const k of list.keys.slice(0, 25)){
+        try {
+          const r = await window.storage.get(k, true);
+          if (r && r.value){
+            const d = JSON.parse(r.value);
+            entries.push({ id: k.replace('frs-empire:score:',''), balance: d.balance || 0, league: d.league || '' });
+          }
+        } catch(e){}
+      }
+      entries.sort((a,b)=> b.balance - a.balance);
+      leaderboardList.innerHTML = entries.slice(0,15).map((e,i) =>
+        `<div class="board-row"><span>#${i+1} · ${e.id}</span><span>$${fmt(e.balance)} · ${e.league}</span></div>`
+      ).join('');
+    } catch(e) {
+      leaderboardList.innerHTML = '<div class="task-check">Не удалось загрузить рейтинг.</div>';
+    }
+  }
+
+  enableSharedBtn.addEventListener('click', async () => {
+    sharedOn = true;
+    enableSharedBtn.textContent = 'Рейтинг включён';
+    enableSharedBtn.disabled = true;
+    sharedStatus.textContent = 'Ваш результат виден всем игрокам этой игры.';
+    await submitShared();
+  });
+
+  setInterval(() => { if (sharedOn) submitShared(); }, 15000);
+
+  // ---------- INIT ----------
+  load();
+})();
+</script>
+</body>
+</html>
