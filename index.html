@@ -725,6 +725,84 @@
     border-radius: 6px;
     margin-bottom: 12px;
   }
+
+  /* ---- Mandatory ad interstitial ---- */
+  .mandatory-ad .rules-inner { display: none; } /* not used, keeps class namespace separate */
+
+  .mand-card {
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    border-radius: 14px;
+    padding: 20px 18px;
+    max-width: 320px;
+    width: 100%;
+  }
+
+  .mand-eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  .mand-icon {
+    width: 56px; height: 56px;
+    border-radius: 12px;
+    background: var(--panel-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    margin: 0 auto 12px;
+  }
+
+  .mand-title {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 19px;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+
+  .mand-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--paper-dim);
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  .mand-watch {
+    display: block;
+    text-decoration: none;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    color: var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+
+  .mand-skip {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--paper-dim);
+    color: var(--paper-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .mand-skip:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
 </style>
 </head>
 <body>
@@ -874,6 +952,17 @@
     <button id="offlineClose">Забрать</button>
   </div>
 
+  <div class="modal-overlay" id="mandatoryAdOverlay">
+    <div class="mand-card">
+      <div class="mand-eyebrow">Реклама · спонсор станка</div>
+      <div class="mand-icon" id="mandIcon">📢</div>
+      <div class="mand-title" id="mandTitle">Место для рекламы</div>
+      <div class="mand-sub" id="mandSub">Впишите своего рекламодателя</div>
+      <a class="mand-watch" id="mandWatch" href="#" target="_blank" rel="noopener noreferrer">Смотреть</a>
+      <button class="mand-skip" id="mandSkip" disabled>Продолжить (5)</button>
+    </div>
+  </div>
+
   <div class="modal-overlay rules-modal" id="disclaimerOverlay">
     <div class="rules-inner">
       <h2>Правовая информация</h2>
@@ -934,6 +1023,9 @@
         <li><b>Заморозка инфляции</b> — инфляция не растёт 20 секунд, 3 раза в день.</li>
         <li><b>Лимит энергии</b> — покупается за $, действует навсегда.</li>
       </ul>
+
+      <h3>4.1 Обязательная реклама</h3>
+      <p>Каждый 10-й тап показывает рекламный баннер спонсора. Можно посмотреть его (кнопка «Смотреть») или подождать 5 секунд и нажать «Продолжить». Если подряд 3 раза нажать «Продолжить», не открыв рекламу через «Смотреть», списывается штраф −200 $ФРС с баланса.</p>
 
       <h3>5. Лиги</h3>
       <p>Статус игрока растёт вместе с балансом: Стажёр ФРС → Кассир → Аналитик → Вице-президент → Управляющий → Джером Пауэлл. Прогресс до следующей лиги виден в шапке игры.</p>
@@ -1008,6 +1100,9 @@
   let lastDayReset = new Date().toDateString();
   let tasksState = {};
   let sessionStartTs = Date.now();
+  let tapCount = 0;
+  let watchedThisRound = false;
+  let skipWithoutWatchCount = 0;
 
   const UPGRADES = [
     { id: 'paper', name: 'Бумага', icon: '📄', type: 'tap', baseEffect: 1, baseCost: 100, growth: 1.18 },
@@ -1058,6 +1153,8 @@
   const pressBtn = $('pressBtn'), pressZone = $('pressZone');
   const crashOverlay = $('crashOverlay'), restartBtn = $('restartBtn');
   const offlineOverlay = $('offlineOverlay'), offlineText = $('offlineText'), offlineClose = $('offlineClose');
+  const mandatoryAdOverlay = $('mandatoryAdOverlay'), mandIcon = $('mandIcon'), mandTitle = $('mandTitle'),
+        mandSub = $('mandSub'), mandWatch = $('mandWatch'), mandSkip = $('mandSkip');
 
   function fmt(n){
     n = Math.floor(n);
@@ -1168,6 +1265,60 @@
     await storeSet(key, String(count));
   }
 
+  function showMandatoryAd(){
+    watchedThisRound = false;
+    const ad = ADS[adIndex];
+    mandIcon.textContent = ad.icon;
+    mandTitle.textContent = ad.title;
+    mandSub.textContent = ad.sub;
+    mandWatch.href = ad.url;
+    mandatoryAdOverlay.classList.add('show');
+    let secs = 5;
+    mandSkip.disabled = true;
+    mandSkip.textContent = 'Продолжить (' + secs + ')';
+    const timer = setInterval(() => {
+      secs -= 1;
+      if (secs <= 0){
+        clearInterval(timer);
+        mandSkip.disabled = false;
+        mandSkip.textContent = 'Продолжить';
+      } else {
+        mandSkip.textContent = 'Продолжить (' + secs + ')';
+      }
+    }, 1000);
+  }
+
+  mandWatch.addEventListener('click', () => {
+    watchedThisRound = true;
+    skipWithoutWatchCount = 0;
+    trackAdClick(ADS[adIndex].id + '-mandatory');
+  });
+
+  mandSkip.addEventListener('click', () => {
+    if (mandSkip.disabled) return;
+    if (!watchedThisRound){
+      skipWithoutWatchCount += 1;
+      if (skipWithoutWatchCount >= 3){
+        skipWithoutWatchCount = 0;
+        balance = Math.max(0, balance - 200);
+        render();
+        save();
+        mandSub.textContent = 'Штраф: −200 $ФРС за пропуск рекламы 3 раза подряд';
+        mandSub.style.color = 'var(--stamp-red)';
+        mandSkip.disabled = true;
+        if (navigator.vibrate) navigator.vibrate([30,20,30,20,30]);
+        setTimeout(() => {
+          mandatoryAdOverlay.classList.remove('show');
+          mandSub.style.color = '';
+        }, 1400);
+        return;
+      }
+    } else {
+      skipWithoutWatchCount = 0;
+    }
+    mandatoryAdOverlay.classList.remove('show');
+  });
+
   function renderAdReward(){
     const used = adRewardsUsedToday >= AD_REWARD.dailyLimit;
     $('adRewardIcon').textContent = AD_REWARD.icon;
@@ -1262,6 +1413,7 @@
 
   function press(e){
     if (crashOverlay.classList.contains('show')) return;
+    if (mandatoryAdOverlay.classList.contains('show')) return;
     if (energy < 1) {
       pressBtn.classList.add('empty');
       $('emptyHint').textContent = 'Энергия закончилась — подождите или используйте буст';
@@ -1287,6 +1439,8 @@
     setTimeout(()=> pressBtn.classList.remove('pressed'), 80);
     if (navigator.vibrate) navigator.vibrate(8);
     render();
+    tapCount += 1;
+    if (tapCount % 10 === 0) showMandatoryAd();
   }
 
   function triggerCrash(){
