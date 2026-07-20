@@ -1070,7 +1070,7 @@
 
     <!-- BEGIN AADS AD UNIT 2448631 -->
     <div id="frame" style="width: 300px;margin: 10px auto;z-index: 99998;height: auto">
-      <iframe data-aa='2448631' src='//ad.a-ads.com/2448631/?size=300x250'
+      <iframe data-aa='2448631' data-src='//ad.a-ads.com/2448631/?size=300x250' class="lazy-ad-frame"
                         style='border:0; padding:0; width:300px; height:250px; overflow:hidden;display: block;margin: auto'></iframe>
     </div>
     <!-- END AADS AD UNIT 2448631 -->
@@ -1095,7 +1095,7 @@
 
     <!-- BEGIN AADS AD UNIT 2448632 -->
     <div id="frame" style="width: 100%;margin: 10px auto;position: relative; z-index: 99998;">
-      <iframe data-aa='2448632' src='//acceptable.a-ads.com/2448632/?size=Adaptive'
+      <iframe data-aa='2448632' data-src='//acceptable.a-ads.com/2448632/?size=Adaptive' class="lazy-ad-frame"
                         style='border:0; padding:0; width:70%; height:auto; overflow:hidden;display: block;margin: auto'></iframe>
     </div>
     <!-- END AADS AD UNIT 2448632 -->
@@ -1109,7 +1109,7 @@
 
     <!-- BEGIN AADS AD UNIT 2448633 -->
     <div id="frame" style="width: 320px;margin: 10px auto;z-index: 99998;height: auto">
-      <iframe data-aa='2448633' src='//ad.a-ads.com/2448633/?size=320x100'
+      <iframe data-aa='2448633' data-src='//ad.a-ads.com/2448633/?size=320x100' class="lazy-ad-frame"
                         style='border:0; padding:0; width:320px; height:100px; overflow:hidden;display: block;margin: auto'></iframe>
     </div>
     <!-- END AADS AD UNIT 2448633 -->
@@ -1148,11 +1148,13 @@
 
   <div class="modal-overlay" id="mandatoryAdOverlay">
     <div class="mand-card">
-      <div class="mand-eyebrow">Реклама · спонсор станка</div>
-      <div class="mand-icon" id="mandIcon">📢</div>
-      <div class="mand-title" id="mandTitle">Место для рекламы</div>
-      <div class="mand-sub" id="mandSub">Впишите своего рекламодателя</div>
-      <a class="mand-watch" id="mandWatch" href="#" target="_blank" rel="noopener noreferrer">Смотреть</a>
+      <div class="mand-eyebrow">Обязательный просмотр рекламы</div>
+      <!-- BEGIN AADS AD UNIT 2448631 (mandatory view slot) -->
+      <div id="frame" style="width: 300px;margin: 0 auto 14px;z-index: 99998;height: auto">
+        <iframe id="mandAdFrame" class="lazy-ad-frame" data-aa='2448631' data-src='//ad.a-ads.com/2448631/?size=300x250'
+                          style='border:0; padding:0; width:300px; height:250px; overflow:hidden;display: block;margin: auto'></iframe>
+      </div>
+      <!-- END AADS AD UNIT 2448631 -->
       <button class="mand-skip" id="mandSkip" disabled>Продолжить (5)</button>
     </div>
   </div>
@@ -1219,7 +1221,7 @@
       </ul>
 
       <h3>4.1 Обязательная реклама</h3>
-      <p>Каждый 10-й тап показывает рекламный баннер спонсора. Можно посмотреть его (кнопка «Смотреть») или подождать 5 секунд и нажать «Продолжить». Если подряд 3 раза нажать «Продолжить», не открыв рекламу через «Смотреть», списывается штраф −200 $ФРС с баланса.</p>
+      <p>Каждый 10-й тап показывает рекламный баннер (сеть A-ADS). Кнопка «Продолжить» становится доступной через 5 секунд — досрочно закрыть баннер нельзя, это стандартное требование рекламных сетей к реальной видимости объявления.</p>
 
       <h3>5. Лиги</h3>
       <p>Статус игрока растёт вместе с балансом: Стажёр ФРС → Кассир → Аналитик → Вице-президент → Управляющий → Джером Пауэлл. Прогресс до следующей лиги виден в шапке игры.</p>
@@ -1347,8 +1349,7 @@
   const pressBtn = $('pressBtn'), pressZone = $('pressZone');
   const crashOverlay = $('crashOverlay'), restartBtn = $('restartBtn');
   const offlineOverlay = $('offlineOverlay'), offlineText = $('offlineText'), offlineClose = $('offlineClose');
-  const mandatoryAdOverlay = $('mandatoryAdOverlay'), mandIcon = $('mandIcon'), mandTitle = $('mandTitle'),
-        mandSub = $('mandSub'), mandWatch = $('mandWatch'), mandSkip = $('mandSkip');
+  const mandatoryAdOverlay = $('mandatoryAdOverlay'), mandAdFrame = $('mandAdFrame'), mandSkip = $('mandSkip');
 
   function fmt(n){
     n = Math.floor(n);
@@ -1460,12 +1461,7 @@
   }
 
   function showMandatoryAd(){
-    watchedThisRound = false;
-    const ad = ADS[adIndex];
-    mandIcon.textContent = ad.icon;
-    mandTitle.textContent = ad.title;
-    mandSub.textContent = ad.sub;
-    mandWatch.href = ad.url;
+    mandAdFrame.src = mandAdFrame.getAttribute('data-src');
     mandatoryAdOverlay.classList.add('show');
     let secs = 5;
     mandSkip.disabled = true;
@@ -1482,35 +1478,11 @@
     }, 1000);
   }
 
-  mandWatch.addEventListener('click', () => {
-    watchedThisRound = true;
-    skipWithoutWatchCount = 0;
-    trackAdClick(ADS[adIndex].id + '-mandatory');
-  });
-
   mandSkip.addEventListener('click', () => {
     if (mandSkip.disabled) return;
-    if (!watchedThisRound){
-      skipWithoutWatchCount += 1;
-      if (skipWithoutWatchCount >= 3){
-        skipWithoutWatchCount = 0;
-        balance = Math.max(0, balance - 200);
-        render();
-        save();
-        mandSub.textContent = 'Штраф: −200 $ФРС за пропуск рекламы 3 раза подряд';
-        mandSub.style.color = 'var(--stamp-red)';
-        mandSkip.disabled = true;
-        if (navigator.vibrate) navigator.vibrate([30,20,30,20,30]);
-        setTimeout(() => {
-          mandatoryAdOverlay.classList.remove('show');
-          mandSub.style.color = '';
-        }, 1400);
-        return;
-      }
-    } else {
-      skipWithoutWatchCount = 0;
-    }
     mandatoryAdOverlay.classList.remove('show');
+    mandAdFrame.removeAttribute('src'); // unload while hidden so it's never displayed off-screen
+    mandAdFrame.setAttribute('data-src', mandAdFrame.getAttribute('data-src') || '//ad.a-ads.com/2448631/?size=300x250');
   });
 
   function renderAdReward(){
@@ -1710,7 +1682,12 @@
       document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
       document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
       btn.classList.add('active');
-      $('tab-'+btn.dataset.tab).classList.add('active');
+      const targetPanel = $('tab-'+btn.dataset.tab);
+      targetPanel.classList.add('active');
+      targetPanel.querySelectorAll('iframe.lazy-ad-frame[data-src]').forEach(f => {
+        f.src = f.getAttribute('data-src');
+        f.removeAttribute('data-src');
+      });
       if (btn.dataset.tab === 'board') refreshLeaderboard();
     });
   });
