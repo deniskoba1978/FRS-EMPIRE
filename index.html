@@ -1,168 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<!-- InMobi Choice. Consent Manager Tag v3.0 (for TCF 2.3) -->
-<script type="text/javascript" async=true>
-(function() {
-  var host = "www.themoneytizer.com";
-  var element = document.createElement('script');
-  var firstScript = document.getElementsByTagName('script')[0];
-  var url = 'https://cmp.inmobi.com'
-    .concat('/choice/', '6Fv0cGNfc_bw8', '/', host, '/choice.js?tag_version=V3');
-  var uspTries = 0;
-  var uspTriesLimit = 3;
-  element.async = true;
-  element.type = 'text/javascript';
-  element.src = url;
-
-  firstScript.parentNode.insertBefore(element, firstScript);
-
-  function makeStub() {
-    var TCF_LOCATOR_NAME = '__tcfapiLocator';
-    var queue = [];
-    var win = window;
-    var cmpFrame;
-
-    function addFrame() {
-      var doc = win.document;
-      var otherCMP = !!(win.frames[TCF_LOCATOR_NAME]);
-
-      if (!otherCMP) {
-        if (doc.body) {
-          var iframe = doc.createElement('iframe');
-
-          iframe.style.cssText = 'display:none';
-          iframe.name = TCF_LOCATOR_NAME;
-          doc.body.appendChild(iframe);
-        } else {
-          setTimeout(addFrame, 5);
-        }
-      }
-      return !otherCMP;
-    }
-
-    function tcfAPIHandler() {
-      var gdprApplies;
-      var args = arguments;
-
-      if (!args.length) {
-        return queue;
-      } else if (args[0] === 'setGdprApplies') {
-        if (
-          args.length > 3 &&
-          args[2] === 2 &&
-          typeof args[3] === 'boolean'
-        ) {
-          gdprApplies = args[3];
-          if (typeof args[2] === 'function') {
-            args[2]('set', true);
-          }
-        }
-      } else if (args[0] === 'ping') {
-        var retr = {
-          gdprApplies: gdprApplies,
-          cmpLoaded: false,
-          cmpStatus: 'stub'
-        };
-
-        if (typeof args[2] === 'function') {
-          args[2](retr);
-        }
-      } else {
-        if(args[0] === 'init' && typeof args[3] === 'object') {
-          args[3] = Object.assign(args[3], { tag_version: 'V3' });
-        }
-        queue.push(args);
-      }
-    }
-
-    function postMessageEventHandler(event) {
-      var msgIsString = typeof event.data === 'string';
-      var json = {};
-
-      try {
-        if (msgIsString) {
-          json = JSON.parse(event.data);
-        } else {
-          json = event.data;
-        }
-      } catch (ignore) {}
-
-      var payload = json.__tcfapiCall;
-
-      if (payload) {
-        window.__tcfapi(
-          payload.command,
-          payload.version,
-          function(retValue, success) {
-            var returnMsg = {
-              __tcfapiReturn: {
-                returnValue: retValue,
-                success: success,
-                callId: payload.callId
-              }
-            };
-            if (msgIsString) {
-              returnMsg = JSON.stringify(returnMsg);
-            }
-            if (event && event.source && event.source.postMessage) {
-              event.source.postMessage(returnMsg, '*');
-            }
-          },
-          payload.parameter
-        );
-      }
-    }
-
-    while (win) {
-      try {
-        if (win.frames[TCF_LOCATOR_NAME]) {
-          cmpFrame = win;
-          break;
-        }
-      } catch (ignore) {}
-
-      if (win === window.top) {
-        break;
-      }
-      win = win.parent;
-    }
-    if (!cmpFrame) {
-      addFrame();
-      win.__tcfapi = tcfAPIHandler;
-      win.addEventListener('message', postMessageEventHandler, false);
-    }
-  };
-
-  makeStub();
-
-  var uspStubFunction = function() {
-    var arg = arguments;
-    if (typeof window.__uspapi !== uspStubFunction) {
-      setTimeout(function() {
-        if (typeof window.__uspapi !== 'undefined') {
-          window.__uspapi.apply(window.__uspapi, arg);
-        }
-      }, 500);
-    }
-  };
-
-  var checkIfUspIsReady = function() {
-    uspTries++;
-    if (window.__uspapi === uspStubFunction && uspTries < uspTriesLimit) {
-      console.warn('USP is not accessible');
-    } else {
-      clearInterval(uspInterval);
-    }
-  };
-
-  if (typeof window.__uspapi === 'undefined') {
-    window.__uspapi = uspStubFunction;
-    var uspInterval = setInterval(checkIfUspIsReady, 6000);
-  }
-})();
-</script>
-<!-- End InMobi Choice. Consent Manager Tag v3.0 (for TCF 2.3) -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ФРС Empire — Печатный станок</title>
@@ -315,6 +153,25 @@
   }
 
   .phr b { color: var(--paper-dim); font-weight: 600; }
+
+  .gold-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 8px auto 0;
+    width: fit-content;
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--gold-light);
+  }
+
+  .gold-pill .gold-icon { font-size: 14px; }
 
   .buy-token-btn {
     display: block;
@@ -989,6 +846,7 @@
   <div class="balance-block">
     <div class="balance-value"><div class="coin">$</div><span id="balanceVal">0</span></div>
     <div class="phr">Доход: <b id="phrVal">0</b>/час · Инфляция: <b id="inflVal">0%</b></div>
+    <div class="gold-pill"><span class="gold-icon">🪙</span><span id="goldVal">0</span> Золота</div>
   </div>
 
   <a class="buy-token-btn" id="buyTokenBtn" href="https://t.me/gasPump_bot/app?startapp=eyJyZWZfdXNlcl9pZCI6NjcxNjQwOTAzOCwidG9rZW5fYWRkcmVzcyI6IkVRRHQ4MXVybXlhVUllVmdaeExYRllVWXFfYVdFZ29hQmYxMG0tMWUtbmhiWFVvSSJ9" target="_blank" rel="noopener noreferrer">Купить $ФРС на Gas Pump</a>
@@ -1033,6 +891,11 @@
   <!-- UPGRADES TAB -->
   <div class="panel" id="tab-upgrades">
     <div class="section-title">Апгрейды станка</div>
+
+    <!-- BEGIN ADSTERRA AD UNIT 16260f6d57333f1fab37eb3c433113a4 (lazy container) -->
+    <div id="adsterra-slot-1" class="lazy-ad-container" data-ad-key="16260f6d57333f1fab37eb3c433113a4" style="width:320px; height:50px; margin:10px auto;"></div>
+    <!-- END ADSTERRA AD UNIT -->
+
     <div class="scroll-list" id="upgradesList"></div>
   </div>
 
@@ -1063,6 +926,12 @@
         <div class="name">Лимит энергии</div>
         <div class="desc">Постоянно +200 к максимуму энергии.</div>
         <button id="boostMaxEnergy">Купить за <span id="maxEnergyCost">2 000</span></button>
+      </div>
+      <div class="boost-card">
+        <div class="icon">🪙</div>
+        <div class="name">Золотой пресс</div>
+        <div class="desc">Постоянно +5 к силе тапа. Покупается за Золото.</div>
+        <button id="boostGoldPress">Купить за <span id="goldPressCost">50</span> 🪙</button>
       </div>
     </div>
 
@@ -1226,6 +1095,9 @@
       <h3>5. Лиги</h3>
       <p>Статус игрока растёт вместе с балансом: Стажёр ФРС → Кассир → Аналитик → Вице-президент → Управляющий → Джером Пауэлл. Прогресс до следующей лиги виден в шапке игры.</p>
 
+      <h3>5.1 Золото</h3>
+      <p>Отдельная валюта, не связанная с балансом $. Начисляется бесплатно за реальную активность: переход в новую лигу, выполнение заданий, просмотр обязательной рекламы. Тратится на постоянный буст «Золотой пресс» во вкладке «Бусты». Золото нельзя купить за деньги — это чисто игровая награда за активность.</p>
+
       <h3>6. Пассивный доход и офлайн</h3>
       <p>Апгрейды дают доход в час, который капает даже когда вы не в игре. При возвращении игра начисляет заработанное за время отсутствия (максимум за 3 часа).</p>
 
@@ -1293,6 +1165,8 @@
   let multiLeft = 3;
   let freezeLeft = 3;
   let maxEnergyBought = 0;
+  let gold = 0;
+  let goldPressLevel = 0;
   let lastDayReset = new Date().toDateString();
   let tasksState = {};
   let sessionStartTs = Date.now();
@@ -1342,7 +1216,7 @@
 
   // ---------- DOM ----------
   const $ = id => document.getElementById(id);
-  const balanceVal = $('balanceVal'), phrVal = $('phrVal'), inflVal = $('inflVal');
+  const balanceVal = $('balanceVal'), phrVal = $('phrVal'), inflVal = $('inflVal'), goldVal = $('goldVal');
   const leagueName = $('leagueName'), exchangePill = $('exchangePill');
   const energyText = $('energyText'), energyFill = $('energyFill');
   const inflText = $('inflText'), inflFill = $('inflFill');
@@ -1350,6 +1224,7 @@
   const crashOverlay = $('crashOverlay'), restartBtn = $('restartBtn');
   const offlineOverlay = $('offlineOverlay'), offlineText = $('offlineText'), offlineClose = $('offlineClose');
   const mandatoryAdOverlay = $('mandatoryAdOverlay'), mandAdFrame = $('mandAdFrame'), mandSkip = $('mandSkip');
+  let highestLeagueReached = 0;
 
   function fmt(n){
     n = Math.floor(n);
@@ -1403,6 +1278,7 @@
       if (u.type === 'tap') tapPower += total;
       else profitPerHour += total;
     });
+    tapPower += goldPressLevel * 5;
   }
 
   // sums baseEffect for each owned level (levels scale mildly with growth too, keep additive & simple)
@@ -1416,10 +1292,18 @@
     balanceVal.textContent = fmt(balance);
     phrVal.textContent = fmt(profitPerHour);
     inflVal.textContent = Math.floor(inflation) + '%';
+    goldVal.textContent = fmt(gold);
     const lg = currentLeague();
     leagueName.textContent = lg.name;
     exchangePill.textContent = 'Крахов: ' + crashes;
     renderLeagueProgress(lg);
+    const lgIdx = LEAGUES.indexOf(lg);
+    if (lgIdx > highestLeagueReached){
+      const gained = (lgIdx - highestLeagueReached) * 50;
+      highestLeagueReached = lgIdx;
+      gold += gained;
+      goldVal.textContent = fmt(gold);
+    }
     energyText.textContent = Math.floor(energy) + ' / ' + maxEnergy;
     energyFill.style.width = (energy / maxEnergy * 100) + '%';
     inflText.textContent = Math.floor(inflation) + '%';
@@ -1436,6 +1320,9 @@
     const meCost = 2000 * Math.pow(1.6, maxEnergyBought);
     $('maxEnergyCost').textContent = fmt(meCost);
     $('boostMaxEnergy').disabled = balance < meCost;
+    const gpCost = 50 * (goldPressLevel + 1);
+    $('goldPressCost').textContent = fmt(gpCost);
+    $('boostGoldPress').disabled = gold < gpCost;
     renderAdReward();
   }
 
@@ -1472,6 +1359,9 @@
         clearInterval(timer);
         mandSkip.disabled = false;
         mandSkip.textContent = 'Продолжить';
+        gold += 5;
+        goldVal.textContent = fmt(gold);
+        save();
       } else {
         mandSkip.textContent = 'Продолжить (' + secs + ')';
       }
@@ -1557,6 +1447,7 @@
           if (tasksState[t.id]) return;
           tasksState[t.id] = true;
           balance += t.reward;
+          gold += 20;
           render();
           save();
         });
@@ -1651,12 +1542,22 @@
     render(); save();
   });
 
+  $('boostGoldPress').addEventListener('click', () => {
+    const cost = 50 * (goldPressLevel + 1);
+    if (gold < cost) return;
+    gold -= cost;
+    goldPressLevel += 1;
+    recompute();
+    render(); save();
+  });
+
   $('resetBtn').addEventListener('click', async () => {
     if (!confirm('Сбросить весь прогресс в этой игре? Это необратимо.')) return;
     balance = 0; energy = 1000; maxEnergy = 1000; tapPower = 1; profitPerHour = 0;
     inflation = 0; crashes = 0; sharedOn = false; multiTapUntil = 0; freezeUntil = 0;
     refillsLeft = 3; multiLeft = 3; freezeLeft = 3; maxEnergyBought = 0;
     tasksState = {}; sessionStartTs = Date.now();
+    gold = 0; goldPressLevel = 0; highestLeagueReached = 0;
     UPGRADES.forEach(u => upgradeLevels[u.id] = 0);
     recompute();
     render();
@@ -1688,6 +1589,18 @@
         f.src = f.getAttribute('data-src');
         f.removeAttribute('data-src');
       });
+      targetPanel.querySelectorAll('.lazy-ad-container[data-ad-key]').forEach(container => {
+        const key = container.getAttribute('data-ad-key');
+        container.removeAttribute('data-ad-key');
+        const optionsScript = document.createElement('script');
+        optionsScript.type = 'text/javascript';
+        optionsScript.text = "atOptions = { 'key' : '" + key + "', 'format' : 'iframe', 'height' : 50, 'width' : 320, 'params' : {} };";
+        const invokeScript = document.createElement('script');
+        invokeScript.type = 'text/javascript';
+        invokeScript.src = 'https://www.highperformanceformat.com/' + key + '/invoke.js';
+        container.appendChild(optionsScript);
+        container.appendChild(invokeScript);
+      });
       if (btn.dataset.tab === 'board') refreshLeaderboard();
     });
   });
@@ -1717,6 +1630,7 @@
     if (!tasksState['t5'] && !crashOverlay.classList.contains('show') && (Date.now() - sessionStartTs) >= 300000){
       tasksState['t5'] = true;
       balance += TASKS.find(t=>t.id==='t5').reward;
+      gold += 20;
       render();
       save();
     } else if (!tasksState['t5']){
@@ -1728,7 +1642,7 @@
   async function save(){
     const data = { balance, energy, maxEnergy, inflation, crashes, upgradeLevels,
       refillsLeft, multiLeft, freezeLeft, maxEnergyBought, lastDayReset, tasksState,
-      adRewardsUsedToday, lastSaveTs: Date.now() };
+      adRewardsUsedToday, gold, goldPressLevel, highestLeagueReached, lastSaveTs: Date.now() };
     await storeSet('frs-empire:save', JSON.stringify(data));
   }
 
@@ -1749,6 +1663,9 @@
         maxEnergyBought = d.maxEnergyBought || 0;
         lastDayReset = d.lastDayReset || new Date().toDateString();
         tasksState = d.tasksState || {};
+        gold = d.gold || 0;
+        goldPressLevel = d.goldPressLevel || 0;
+        highestLeagueReached = d.highestLeagueReached || 0;
         recompute();
         const elapsedMs = Date.now() - (d.lastSaveTs || Date.now());
         const elapsedHrs = Math.min(elapsedMs / 3600000, 3); // cap offline earn at 3h
@@ -1904,15 +1821,4 @@
 })();
 </script>
 </body>
-  <script>
-  atOptions = {
-    'key' : '16260f6d57333f1fab37eb3c433113a4',
-    'format' : 'iframe',
-    'height' : 50,
-    'width' : 320,
-    'params' : {}
-  };
-</script>
-<script src="https://www.highperformanceformat.com/16260f6d57333f1fab37eb3c433113a4/invoke.js"></script>
-
 </html>
