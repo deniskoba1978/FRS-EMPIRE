@@ -1121,6 +1121,17 @@
         Если в будущем появится автоматическая выплата токенов за игру — условия будут объявлены отдельно, до того как о них скажут в правилах. До этого объявления баланс в игре не конвертируется в деньги автоматически.
       </div>
 
+      <h3>10.1 Покупка бустов и апгрейдов за токен $ФРС</h3>
+      <p>Если Администрация введёт возможность покупки бустов, апгрейдов или иного игрового контента за токен $ФРС — такая покупка является <b>разовой, окончательной и невозвратной сделкой</b>, аналогичной покупке любого игрового контента за реальные деньги в других играх. Она:</p>
+      <ul>
+        <li>не создаёт права на возврат токена или обмен обратно на деньги;</li>
+        <li>не создаёт права на участие в будущих вознаграждениях сверх того, что доступно любому игроку бесплатно;</li>
+        <li>не зависит от количества внутриигровой валюты (💵, 🪙), накопленной игроком — количество внутриигровых ресурсов не конвертируется в токен и не создаёт долгового обязательства Администрации, независимо от того, сколько их было заработано.</li>
+      </ul>
+      <div class="rules-note">
+        Возможные будущие вознаграждения активным игрокам (раздел 10) определяются исключительно фиксированным бюджетом, который объявляет Администрация, а не количеством накопленной игроком внутриигровой валюты или суммой потраченных токенов.
+      </div>
+
       <h3>11. Ответственность и ограничения</h3>
       <ul>
         <li>Администрация не несёт ответственности за убытки, возникшие в результате участия в Игре или самостоятельной покупки токена $ФРС на внешних платформах.</li>
@@ -1182,6 +1193,8 @@
   let maxEnergyBought = 0;
   let gold = 0;
   let goldPressLevel = 0;
+  let adGoldEarnedToday = 0;
+  const AD_GOLD_DAILY_CAP = 50;
   let lastDayReset = new Date().toDateString();
   let tasksState = {};
   let sessionStartTs = Date.now();
@@ -1374,8 +1387,12 @@
         clearInterval(timer);
         mandSkip.disabled = false;
         mandSkip.textContent = 'Продолжить';
-        gold += 5;
-        goldVal.textContent = fmt(gold);
+        if (adGoldEarnedToday < AD_GOLD_DAILY_CAP){
+          const gain = Math.min(5, AD_GOLD_DAILY_CAP - adGoldEarnedToday);
+          gold += gain;
+          adGoldEarnedToday += gain;
+          goldVal.textContent = fmt(gold);
+        }
         save();
       } else {
         mandSkip.textContent = 'Продолжить (' + secs + ')';
@@ -1572,7 +1589,7 @@
     inflation = 0; crashes = 0; sharedOn = false; multiTapUntil = 0; freezeUntil = 0;
     refillsLeft = 3; multiLeft = 3; freezeLeft = 3; maxEnergyBought = 0;
     tasksState = {}; sessionStartTs = Date.now();
-    gold = 0; goldPressLevel = 0; highestLeagueReached = 0;
+    gold = 0; goldPressLevel = 0; highestLeagueReached = 0; adGoldEarnedToday = 0;
     UPGRADES.forEach(u => upgradeLevels[u.id] = 0);
     recompute();
     render();
@@ -1636,6 +1653,7 @@
     if (today !== lastDayReset){
       lastDayReset = today;
       refillsLeft = 3; multiLeft = 3; freezeLeft = 3;
+      adGoldEarnedToday = 0;
       save();
     }
   }, 60000);
@@ -1657,7 +1675,7 @@
   async function save(){
     const data = { balance, energy, maxEnergy, inflation, crashes, upgradeLevels,
       refillsLeft, multiLeft, freezeLeft, maxEnergyBought, lastDayReset, tasksState,
-      adRewardsUsedToday, gold, goldPressLevel, highestLeagueReached, lastSaveTs: Date.now() };
+      adRewardsUsedToday, gold, goldPressLevel, highestLeagueReached, adGoldEarnedToday, lastSaveTs: Date.now() };
     await storeSet('frs-empire:save', JSON.stringify(data));
   }
 
@@ -1681,6 +1699,7 @@
         gold = d.gold || 0;
         goldPressLevel = d.goldPressLevel || 0;
         highestLeagueReached = d.highestLeagueReached || 0;
+        adGoldEarnedToday = d.adGoldEarnedToday || 0;
         recompute();
         const elapsedMs = Date.now() - (d.lastSaveTs || Date.now());
         const elapsedHrs = Math.min(elapsedMs / 3600000, 3); // cap offline earn at 3h
