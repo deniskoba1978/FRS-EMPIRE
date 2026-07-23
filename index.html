@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script src="https://unpkg.com/@tonconnect/sdk@latest/dist/tonconnect-sdk.min.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ФРС Empire — Печатный станок</title>
@@ -213,6 +214,30 @@
   }
 
   .join-btn:active { transform: translateY(2px); }
+
+  .wallet-btn {
+    display: block;
+    margin: 6px 16px 4px;
+    text-align: center;
+    text-decoration: none;
+    background: var(--panel);
+    border: 1px solid var(--press-light);
+    color: var(--paper);
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .wallet-btn.connected {
+    border-color: var(--gold);
+    color: var(--gold-light);
+    cursor: default;
+  }
 
   /* ---- Tab panels ---- */
   .panel { display: none; flex: 1; padding: 0 16px; animation: fadeIn 0.2s ease-out; }
@@ -851,6 +876,7 @@
 
   <a class="buy-token-btn" id="buyTokenBtn" href="https://t.me/gasPump_bot/app?startapp=eyJyZWZfdXNlcl9pZCI6NjcxNjQwOTAzOCwidG9rZW5fYWRkcmVzcyI6IkVRRHQ4MXVybXlhVUllVmdaeExYRllVWXFfYVdFZ29hQmYxMG0tMWUtbmhiWFVvSSJ9" target="_blank" rel="noopener noreferrer">Купить $ФРС на Gas Pump</a>
   <a class="join-btn" id="joinChannelBtn" href="https://t.me/fares_frs7" target="_blank" rel="noopener noreferrer">Вступить в канал $ФРС</a>
+  <button class="wallet-btn" id="walletBtn">Подключить TON-кошелёк</button>
 
   <!-- TAP TAB -->
   <div class="panel tap-panel active" id="tab-main">
@@ -1849,6 +1875,61 @@
   });
 
   setInterval(() => { if (sharedOn) submitShared(); }, 15000);
+
+  // ---------- TON CONNECT (wallet linking) ----------
+  // This only connects the wallet and stores the address — it does NOT send
+  // or receive any tokens. Real payments require a server to verify incoming
+  // transactions (see economy-architecture.md, section 3 — never trust the
+  // browser with real-money balances).
+  let tonConnector = null;
+  let connectedWallet = null;
+  const walletBtn = $('walletBtn');
+
+  async function initTonConnect(){
+    if (typeof window.TonConnectSDK === 'undefined'){
+      walletBtn.textContent = 'Кошелёк недоступен (не удалось загрузить SDK)';
+      walletBtn.disabled = true;
+      return;
+    }
+    tonConnector = new window.TonConnectSDK.TonConnect({
+      manifestUrl: 'https://deniskoba1978.github.io/FRS-EMPIRE/tonconnect-manifest.json'
+    });
+
+    tonConnector.onStatusChange(async (wallet) => {
+      if (wallet){
+        connectedWallet = wallet.account.address;
+        walletBtn.textContent = 'Кошелёк подключён: ' + connectedWallet.slice(0,4) + '...' + connectedWallet.slice(-4);
+        walletBtn.classList.add('connected');
+        await storeSet('frs-empire:ton-wallet', connectedWallet);
+      } else {
+        connectedWallet = null;
+        walletBtn.textContent = 'Подключить TON-кошелёк';
+        walletBtn.classList.remove('connected');
+      }
+    });
+
+    // restore previous session if the wallet app remembers it
+    try { await tonConnector.restoreConnection(); } catch(e) { /* no previous session */ }
+
+    walletBtn.addEventListener('click', async () => {
+      if (connectedWallet){
+        return; // already connected, nothing to do on click
+      }
+      try {
+        const walletsList = await tonConnector.getWallets();
+        const walletConnectionSource = {
+          universalLink: walletsList[0].universalLink,
+          bridgeUrl: walletsList[0].bridgeUrl
+        };
+        const link = tonConnector.connect(walletConnectionSource);
+        window.open(link, '_blank');
+      } catch(e){
+        walletBtn.textContent = 'Не удалось открыть кошелёк, попробуйте ещё раз';
+        setTimeout(()=> walletBtn.textContent = 'Подключить TON-кошелёк', 2500);
+      }
+    });
+  }
+  initTonConnect();
 
   // ---------- INIT ----------
   load();
