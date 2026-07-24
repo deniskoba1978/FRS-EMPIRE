@@ -1062,6 +1062,14 @@
     <button id="offlineClose">Забрать</button>
   </div>
 
+  <div class="modal-overlay" id="walletPickerOverlay">
+    <div class="mand-card">
+      <div class="mand-eyebrow">Выберите ваш кошелёк</div>
+      <div id="walletPickerList" style="display:flex; flex-direction:column; gap:8px; margin-top:10px;"></div>
+      <button class="mand-skip" id="walletPickerClose" style="margin-top:14px;">Отмена</button>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="payModalOverlay">
     <div class="mand-card">
       <div class="mand-eyebrow">Покупка за реальный токен</div>
@@ -1956,18 +1964,39 @@
       }
       try {
         const walletsList = await tonConnector.getWallets();
-        const walletConnectionSource = {
-          universalLink: walletsList[0].universalLink,
-          bridgeUrl: walletsList[0].bridgeUrl
-        };
-        const link = tonConnector.connect(walletConnectionSource);
-        window.open(link, '_blank');
+        showWalletPicker(walletsList);
       } catch(e){
-        walletBtn.textContent = 'Не удалось открыть кошелёк, попробуйте ещё раз';
+        walletBtn.textContent = 'Не удалось получить список кошельков, попробуйте ещё раз';
         setTimeout(()=> walletBtn.textContent = 'Подключить TON-кошелёк', 2500);
       }
     });
   }
+
+  function showWalletPicker(walletsList){
+    const listEl = $('walletPickerList');
+    listEl.innerHTML = '';
+    walletsList.forEach(w => {
+      const btn = document.createElement('button');
+      btn.className = 'mand-watch';
+      btn.style.margin = '0';
+      btn.textContent = w.name || w.appName || 'Кошелёк';
+      btn.addEventListener('click', () => {
+        try {
+          const source = w.universalLink
+            ? { universalLink: w.universalLink, bridgeUrl: w.bridgeUrl }
+            : { jsBridgeKey: w.jsBridgeKey };
+          const link = tonConnector.connect(source);
+          if (link) window.open(link, '_blank');
+          $('walletPickerOverlay').classList.remove('show');
+        } catch(e){
+          alert('Не удалось открыть этот кошелёк, попробуйте другой из списка.');
+        }
+      });
+      listEl.appendChild(btn);
+    });
+    $('walletPickerOverlay').classList.add('show');
+  }
+  $('walletPickerClose').addEventListener('click', () => $('walletPickerOverlay').classList.remove('show'));
   initTonConnect();
 
   // ---------- REAL-TOKEN PURCHASES (via backend verification) ----------
