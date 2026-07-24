@@ -891,6 +891,7 @@
   <a class="buy-token-btn" id="buyTokenBtn" href="https://t.me/gasPump_bot/app?startapp=eyJyZWZfdXNlcl9pZCI6NjcxNjQwOTAzOCwidG9rZW5fYWRkcmVzcyI6IkVRRHQ4MXVybXlhVUllVmdaeExYRllVWXFfYVdFZ29hQmYxMG0tMWUtbmhiWFVvSSJ9" target="_blank" rel="noopener noreferrer">Купить $ФРС на Gas Pump</a>
   <a class="join-btn" id="joinChannelBtn" href="https://t.me/fares_frs7" target="_blank" rel="noopener noreferrer">Вступить в канал $ФРС</a>
   <button class="wallet-btn" id="walletBtn">Подключить TON-кошелёк</button>
+  <button class="disclaimer-link" id="otherWalletBtn" style="margin-top:2px;">Использую другой кошелёк (не Tonkeeper)</button>
 
   <!-- TAP TAB -->
   <div class="panel tap-panel active" id="tab-main">
@@ -1964,7 +1965,21 @@
       }
       try {
         const walletsList = await tonConnector.getWallets();
-        showWalletPicker(walletsList);
+        // Ищем именно обычный Tonkeeper — исключаем "Tonkeeper Pro" и другие варианты,
+        // которые могут использовать другую схему ссылок и вызывать "неверная ссылка".
+        const regularTonkeeper = walletsList.find(w => {
+          const n = (w.name || w.appName || '').toLowerCase();
+          return n === 'tonkeeper' || (n.includes('tonkeeper') && !n.includes('pro'));
+        });
+        if (regularTonkeeper){
+          const source = regularTonkeeper.universalLink
+            ? { universalLink: regularTonkeeper.universalLink, bridgeUrl: regularTonkeeper.bridgeUrl }
+            : { jsBridgeKey: regularTonkeeper.jsBridgeKey };
+          const link = tonConnector.connect(source);
+          if (link) window.open(link, '_blank');
+        } else {
+          showWalletPicker(walletsList);
+        }
       } catch(e){
         walletBtn.textContent = 'Не удалось получить список кошельков, попробуйте ещё раз';
         setTimeout(()=> walletBtn.textContent = 'Подключить TON-кошелёк', 2500);
@@ -1997,6 +2012,13 @@
     $('walletPickerOverlay').classList.add('show');
   }
   $('walletPickerClose').addEventListener('click', () => $('walletPickerOverlay').classList.remove('show'));
+  $('otherWalletBtn').addEventListener('click', async () => {
+    if (connectedWallet) return;
+    try {
+      const walletsList = await tonConnector.getWallets();
+      showWalletPicker(walletsList);
+    } catch(e){ /* SDK not ready yet */ }
+  });
   initTonConnect();
 
   // ---------- REAL-TOKEN PURCHASES (via backend verification) ----------
