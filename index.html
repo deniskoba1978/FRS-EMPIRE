@@ -486,6 +486,20 @@
     cursor: not-allowed;
   }
 
+  .real-buy-btn {
+    width: 100%;
+    margin-top: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 700;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold-light);
+    border-radius: 6px;
+    padding: 7px;
+    cursor: pointer;
+  }
+
   /* BOTTOM NAV */
   .bottom-nav {
     position: fixed;
@@ -934,32 +948,39 @@
         <div class="name">Полная энергия</div>
         <div class="desc">Мгновенно восстанавливает энергию. 3 раза в день, бесплатно.</div>
         <button id="boostRefill">Использовать (<span id="refillLeft">3</span>)</button>
+        <button class="real-buy-btn" data-item="boost_full_energy" data-price="5">⚡ Купить сразу за 5 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">🚀</div>
         <div class="name">Мультитап x3</div>
         <div class="desc">Утраивает доход с тапа на 30 секунд.</div>
         <button id="boostMulti">Использовать (<span id="multiLeft">3</span>)</button>
+        <button class="real-buy-btn" data-item="boost_multitap" data-price="5">⚡ Купить сразу за 5 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">❄️</div>
         <div class="name">Заморозка инфляции</div>
         <div class="desc">Инфляция не растёт 20 секунд.</div>
         <button id="boostFreeze">Использовать (<span id="freezeLeft">3</span>)</button>
+        <button class="real-buy-btn" data-item="boost_freeze_inflation" data-price="5">⚡ Купить сразу за 5 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">🔋</div>
         <div class="name">Лимит энергии</div>
         <div class="desc">Постоянно +200 к максимуму энергии.</div>
         <button id="boostMaxEnergy">Купить за <span id="maxEnergyCost">2 000</span></button>
+        <button class="real-buy-btn" data-item="boost_max_energy_permanent" data-price="25">⚡ Купить сразу за 25 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">🪙</div>
         <div class="name">Золотой пресс</div>
         <div class="desc">Постоянно +5 к силе тапа. Покупается за Золото.</div>
         <button id="boostGoldPress">Купить за <span id="goldPressCost">50</span> 🪙</button>
+        <button class="real-buy-btn" data-item="boost_gold_press_level" data-price="15">⚡ Купить сразу за 15 $ФРС</button>
       </div>
     </div>
+
+    <div class="task-check" style="margin-top:10px;">Кнопки «Купить сразу за N $ФРС» — необязательная платная альтернатива. Это разовая, окончательная покупка реальным токеном (см. правила, раздел 10.1) — требует подключённого кошелька.</div>
 
     <div class="section-title" style="margin-top:20px;">Спонсор буста</div>
 
@@ -1039,6 +1060,24 @@
     <h2>Пока вас не было...</h2>
     <p id="offlineText"></p>
     <button id="offlineClose">Забрать</button>
+  </div>
+
+  <div class="modal-overlay" id="payModalOverlay">
+    <div class="mand-card">
+      <div class="mand-eyebrow">Покупка за реальный токен</div>
+      <div class="mand-icon">💎</div>
+      <div class="mand-title" id="payItemName">Товар</div>
+      <div class="mand-sub">
+        1. Отправьте <b id="payAmount">5</b> $ФРС на адрес казны:<br>
+        <span id="payAddress" style="word-break:break-all; color:var(--gold-light); font-size:10px;"></span><br><br>
+        2. Отправляйте именно с подключённого кошелька <span id="payFromWallet" style="color:var(--gold-light);"></span><br><br>
+        3. После отправки нажмите кнопку проверки ниже.
+      </div>
+      <button class="mand-watch" id="payCopyAddress" style="cursor:pointer;">Скопировать адрес казны</button>
+      <button class="mand-watch" id="payVerifyBtn">Я отправил, проверить платёж</button>
+      <button class="mand-skip" id="payCloseBtn">Закрыть</button>
+      <div class="task-check" id="payStatus" style="margin-top:10px; display:none;"></div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="mandatoryAdOverlay">
@@ -1930,6 +1969,92 @@
     });
   }
   initTonConnect();
+
+  // ---------- REAL-TOKEN PURCHASES (via backend verification) ----------
+  const BACKEND_URL = 'https://frs-empire-backend.onrender.com';
+  const TREASURY_ADDRESS = 'UQAS3rYRaSgvySOkxJ-kxIsR-EZ_Sc5sm0fLukrHIw0U9QOW';
+
+  const payModalOverlay = $('payModalOverlay'), payItemName = $('payItemName'),
+        payAmount = $('payAmount'), payAddress = $('payAddress'), payFromWallet = $('payFromWallet'),
+        payCopyAddress = $('payCopyAddress'), payVerifyBtn = $('payVerifyBtn'),
+        payCloseBtn = $('payCloseBtn'), payStatus = $('payStatus');
+
+  let currentPurchaseItem = null;
+
+  const ITEM_LABELS = {
+    'boost_full_energy': 'Полная энергия',
+    'boost_multitap': 'Мультитап x3',
+    'boost_freeze_inflation': 'Заморозка инфляции',
+    'boost_max_energy_permanent': 'Лимит энергии (навсегда)',
+    'boost_gold_press_level': 'Золотой пресс (1 уровень)',
+  };
+
+  document.querySelectorAll('.real-buy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!connectedWallet){
+        alert('Сначала подключите TON-кошелёк кнопкой на главном экране.');
+        return;
+      }
+      currentPurchaseItem = btn.getAttribute('data-item');
+      const price = btn.getAttribute('data-price');
+      payItemName.textContent = ITEM_LABELS[currentPurchaseItem] || currentPurchaseItem;
+      payAmount.textContent = price;
+      payAddress.textContent = TREASURY_ADDRESS;
+      payFromWallet.textContent = connectedWallet.slice(0,6) + '...' + connectedWallet.slice(-6);
+      payStatus.style.display = 'none';
+      payVerifyBtn.disabled = false;
+      payVerifyBtn.textContent = 'Я отправил, проверить платёж';
+      payModalOverlay.classList.add('show');
+    });
+  });
+
+  payCopyAddress.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(TREASURY_ADDRESS);
+      payCopyAddress.textContent = 'Скопировано';
+      setTimeout(()=> payCopyAddress.textContent = 'Скопировать адрес казны', 1800);
+    } catch(e){ /* clipboard may be unavailable, address is visible as text anyway */ }
+  });
+
+  payCloseBtn.addEventListener('click', () => payModalOverlay.classList.remove('show'));
+
+  function applyPurchasedBoost(itemId){
+    if (itemId === 'boost_full_energy'){ energy = maxEnergy; }
+    else if (itemId === 'boost_multitap'){ multiTapUntil = Date.now() + 30000; }
+    else if (itemId === 'boost_freeze_inflation'){ freezeUntil = Date.now() + 20000; }
+    else if (itemId === 'boost_max_energy_permanent'){ maxEnergyBought += 1; maxEnergy += 200; }
+    else if (itemId === 'boost_gold_press_level'){ goldPressLevel += 1; recompute(); }
+    render();
+    save();
+  }
+
+  payVerifyBtn.addEventListener('click', async () => {
+    payVerifyBtn.disabled = true;
+    payVerifyBtn.textContent = 'Проверяем...';
+    payStatus.style.display = 'block';
+    payStatus.textContent = 'Обращаемся к серверу — это может занять до минуты, если сервер только что "проснулся".';
+    try {
+      const res = await fetch(BACKEND_URL + '/verify-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ walletAddress: connectedWallet, itemId: currentPurchaseItem })
+      });
+      const data = await res.json();
+      if (res.ok && data.success){
+        payStatus.textContent = 'Платёж подтверждён! Буст применён.';
+        applyPurchasedBoost(currentPurchaseItem);
+        setTimeout(()=> payModalOverlay.classList.remove('show'), 1500);
+      } else {
+        payStatus.textContent = data.error || 'Платёж пока не найден. Подождите немного (переводы иногда идут дольше минуты) и попробуйте снова.';
+        payVerifyBtn.disabled = false;
+        payVerifyBtn.textContent = 'Проверить ещё раз';
+      }
+    } catch(e){
+      payStatus.textContent = 'Не удалось связаться с сервером. Проверьте подключение и попробуйте ещё раз.';
+      payVerifyBtn.disabled = false;
+      payVerifyBtn.textContent = 'Проверить ещё раз';
+    }
+  });
 
   // ---------- INIT ----------
   load();
