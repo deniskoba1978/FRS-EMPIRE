@@ -949,35 +949,34 @@
         <div class="name">Полная энергия</div>
         <div class="desc">Мгновенно восстанавливает энергию. 3 раза в день, бесплатно.</div>
         <button id="boostRefill">Использовать (<span id="refillLeft">3</span>)</button>
-        <button class="real-buy-btn" data-item="boost_full_energy" data-price="5">⚡ Купить сразу за 5 $ФРС</button>
+        <button class="real-buy-btn" data-item="boost_full_energy" data-price="500">⚡ Купить сразу за 500 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">🚀</div>
         <div class="name">Мультитап x3</div>
         <div class="desc">Утраивает доход с тапа на 30 секунд.</div>
         <button id="boostMulti">Использовать (<span id="multiLeft">3</span>)</button>
-        <button class="real-buy-btn" data-item="boost_multitap" data-price="5">⚡ Купить сразу за 5 $ФРС</button>
+        <button class="real-buy-btn" data-item="boost_multitap" data-price="500">⚡ Купить сразу за 500 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">❄️</div>
         <div class="name">Заморозка инфляции</div>
         <div class="desc">Инфляция не растёт 20 секунд.</div>
         <button id="boostFreeze">Использовать (<span id="freezeLeft">3</span>)</button>
-        <button class="real-buy-btn" data-item="boost_freeze_inflation" data-price="5">⚡ Купить сразу за 5 $ФРС</button>
+        <button class="real-buy-btn" data-item="boost_freeze_inflation" data-price="500">⚡ Купить сразу за 500 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">🔋</div>
         <div class="name">Лимит энергии</div>
         <div class="desc">Постоянно +200 к максимуму энергии.</div>
         <button id="boostMaxEnergy">Купить за <span id="maxEnergyCost">2 000</span></button>
-        <button class="real-buy-btn" data-item="boost_max_energy_permanent" data-price="25">⚡ Купить сразу за 25 $ФРС</button>
+        <button class="real-buy-btn" data-item="boost_max_energy_permanent" data-price="2500">⚡ Купить сразу за 2500 $ФРС</button>
       </div>
       <div class="boost-card">
         <div class="icon">🪙</div>
         <div class="name">Золотой пресс</div>
-        <div class="desc">Постоянно +5 к силе тапа. Покупается за Золото.</div>
-        <button id="boostGoldPress">Купить за <span id="goldPressCost">50</span> 🪙</button>
-        <button class="real-buy-btn" data-item="boost_gold_press_level" data-price="15">⚡ Купить сразу за 15 $ФРС</button>
+        <div class="desc">Постоянно +5 к силе тапа.</div>
+        <button class="real-buy-btn" data-item="boost_gold_press_level" data-price="1500">⚡ Купить сразу за 1500 $ФРС</button>
       </div>
     </div>
 
@@ -1082,6 +1081,8 @@
         2. Отправляйте именно с подключённого кошелька <span id="payFromWallet" style="color:var(--gold-light);"></span><br><br>
         3. После отправки нажмите кнопку проверки ниже.
       </div>
+      <button class="mand-watch" id="payAutoSendBtn" style="background:var(--gold); color:var(--ink); border:none;">Отправить автоматически из кошелька</button>
+      <div class="task-check" style="margin:8px 0; text-align:left;">Или вручную:</div>
       <button class="mand-watch" id="payCopyAddress" style="cursor:pointer;">Скопировать адрес казны</button>
       <button class="mand-watch" id="payVerifyBtn">Я отправил, проверить платёж</button>
       <button class="mand-skip" id="payCloseBtn">Закрыть</button>
@@ -1170,7 +1171,7 @@
       <p>Статус игрока растёт вместе с балансом: Стажёр ФРС → Кассир → Аналитик → Вице-президент → Управляющий → Джером Пауэлл. Прогресс до следующей лиги виден в шапке игры.</p>
 
       <h3>5.1 Золото</h3>
-      <p>Отдельная валюта, не связанная с балансом $. Начисляется бесплатно за реальную активность: переход в новую лигу, выполнение заданий, просмотр обязательной рекламы. Тратится на постоянный буст «Золотой пресс» во вкладке «Бусты». Золото нельзя купить за деньги — это чисто игровая награда за активность.</p>
+      <p>Отдельная валюта, не связанная с балансом $. Начисляется бесплатно за реальную активность: переход в новую лигу, выполнение заданий, просмотр обязательной рекламы. Золото нельзя купить за деньги — это чисто игровая награда за активность и показатель прогресса.</p>
 
       <h3>6. Пассивный доход и офлайн</h3>
       <p>Апгрейды дают доход в час, который капает даже когда вы не в игре. При возвращении игра начисляет заработанное за время отсутствия (максимум за 3 часа).</p>
@@ -1422,9 +1423,6 @@
     const meCost = 2000 * Math.pow(1.6, maxEnergyBought);
     $('maxEnergyCost').textContent = fmt(meCost);
     $('boostMaxEnergy').disabled = balance < meCost;
-    const gpCost = 50 * (goldPressLevel + 1);
-    $('goldPressCost').textContent = fmt(gpCost);
-    $('boostGoldPress').disabled = gold < gpCost;
     renderAdReward();
   }
 
@@ -1645,15 +1643,6 @@
     balance -= cost;
     maxEnergyBought += 1;
     maxEnergy += 200;
-    render(); save();
-  });
-
-  $('boostGoldPress').addEventListener('click', () => {
-    const cost = 50 * (goldPressLevel + 1);
-    if (gold < cost) return;
-    gold -= cost;
-    goldPressLevel += 1;
-    recompute();
     render(); save();
   });
 
@@ -2024,13 +2013,81 @@
   // ---------- REAL-TOKEN PURCHASES (via backend verification) ----------
   const BACKEND_URL = 'https://frs-empire-backend.onrender.com';
   const TREASURY_ADDRESS = 'UQAS3rYRaSgvySOkxJ-kxIsR-EZ_Sc5sm0fLukrHIw0U9QOW';
+  const JETTON_MASTER_ADDRESS = 'EQDt81urmyaUIeVgZxLXFYUYq_aWEgoaBf10m-1e-nhbXUoI';
 
   const payModalOverlay = $('payModalOverlay'), payItemName = $('payItemName'),
         payAmount = $('payAmount'), payAddress = $('payAddress'), payFromWallet = $('payFromWallet'),
         payCopyAddress = $('payCopyAddress'), payVerifyBtn = $('payVerifyBtn'),
         payCloseBtn = $('payCloseBtn'), payStatus = $('payStatus');
-
   let currentPurchaseItem = null;
+
+  const payAutoSendBtn = $('payAutoSendBtn');
+
+  // Находим jetton-кошелёк отправителя (не путать с его основным TON-адресом —
+  // jetton-переводы всегда идут через отдельный контракт-кошелёк токена).
+  async function getSenderJettonWallet(ownerAddress){
+    const url = `https://toncenter.com/api/v3/jetton/wallets?owner_address=${ownerAddress}&jetton_address=${JETTON_MASTER_ADDRESS}&limit=1`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Не удалось найти ваш jetton-кошелёк $ФРС');
+    const data = await res.json();
+    const wallets = data.jetton_wallets || [];
+    if (!wallets.length) throw new Error('На вашем кошельке не найдено $ФРС');
+    return wallets[0].address;
+  }
+
+  payAutoSendBtn.addEventListener('click', async () => {
+    if (!connectedWallet || !currentPurchaseItem) return;
+    const priceRaw = document.querySelector(`.real-buy-btn[data-item="${currentPurchaseItem}"]`).getAttribute('data-price');
+    payAutoSendBtn.disabled = true;
+    payAutoSendBtn.textContent = 'Готовим транзакцию...';
+    payStatus.style.display = 'block';
+    payStatus.textContent = 'Подождите — собираем перевод, затем откроется ваш кошелёк для подтверждения.';
+    try {
+      const { beginCell, Address } = await import('https://esm.sh/@ton/core@0.56.3');
+      const senderJettonWallet = await getSenderJettonWallet(connectedWallet);
+
+      // Тело сообщения jetton-перевода — стандарт TEP-74.
+      // Сумма указана в минимальных единицах токена; если у вашего jetton
+      // decimals отличается от 9, скорректируйте умножение ниже.
+      const amountNano = BigInt(Math.round(Number(priceRaw) * 1e9));
+      const body = beginCell()
+        .storeUint(0x0f8a7ea5, 32) // op: jetton transfer
+        .storeUint(0, 64) // query_id
+        .storeCoins(amountNano)
+        .storeAddress(Address.parse(TREASURY_ADDRESS))
+        .storeAddress(Address.parse(connectedWallet)) // response_destination — сдача комиссии вернётся вам же
+        .storeBit(0) // custom_payload: none
+        .storeCoins(1n) // forward_ton_amount (минимальный, чтобы казна тоже получила уведомление)
+        .storeBit(0) // forward_payload: none
+        .endCell();
+
+      payAutoSendBtn.textContent = 'Подтвердите в кошельке...';
+      await tonConnector.sendTransaction({
+        validUntil: Math.floor(Date.now()/1000) + 300,
+        messages: [{
+          address: senderJettonWallet,
+          amount: '50000000', // ~0.05 TON на комиссию сети
+          payload: body.toBoc().toString('base64')
+        }]
+      });
+
+      payStatus.textContent = 'Транзакция отправлена! Ждём подтверждения в сети (обычно 10-30 секунд), затем проверяем...';
+      setTimeout(() => payVerifyBtn.click(), 15000);
+    } catch(e){
+      console.error(e);
+      payStatus.textContent = 'Автоотправка не удалась (' + (e.message || 'неизвестная ошибка') + '). Используйте ручной способ ниже — скопируйте адрес и отправьте через приложение кошелька.';
+      payAutoSendBtn.disabled = false;
+      payAutoSendBtn.textContent = 'Отправить автоматически из кошелька';
+    }
+  });
+
+  payCopyAddress.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(TREASURY_ADDRESS);
+      payCopyAddress.textContent = 'Скопировано';
+      setTimeout(()=> payCopyAddress.textContent = 'Скопировать адрес казны', 1800);
+    } catch(e){ /* clipboard may be unavailable, address is visible as text anyway */ }
+  });
 
   const ITEM_LABELS = {
     'boost_full_energy': 'Полная энергия',
@@ -2057,14 +2114,6 @@
       payVerifyBtn.textContent = 'Я отправил, проверить платёж';
       payModalOverlay.classList.add('show');
     });
-  });
-
-  payCopyAddress.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(TREASURY_ADDRESS);
-      payCopyAddress.textContent = 'Скопировано';
-      setTimeout(()=> payCopyAddress.textContent = 'Скопировать адрес казны', 1800);
-    } catch(e){ /* clipboard may be unavailable, address is visible as text anyway */ }
   });
 
   payCloseBtn.addEventListener('click', () => payModalOverlay.classList.remove('show'));
